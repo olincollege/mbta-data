@@ -71,27 +71,36 @@ Restate research question 1. Construct 3-4 relevant visualizations that provide 
 # Research Question 2 (and possibly 3)
 
 Repeat the previous exercise for your second and possibly third research questions.
+
+What factors affect mbta light rail ridership (COVID lockdown, day of the week, time of day, etc)?
+
+
 ```{r}
 # Load required library
 library(ggplot2)
 
 # Read the CSV file
 df <- read.csv("GSE_by_year/GSE_2014.csv")
-
-# Convert the 'service_date' column to Date format
 df$service_date <- as.Date(df$service_date)
 
+# Convert the 'service_date' column to Date format
+df$service_day <- weekdays(df$service_date)
+
 # Aggregate the data by date and calculate the sum of entries for each date
-df_sum <- aggregate(gated_entries ~ service_date, data = df, FUN = sum)
+df_sum_day <- df %>%
+  group_by(service_day) %>%
+  summarise(total_entries = sum(gated_entries))
 
 # Create a line plot of sum of entries per date for all stations
-ggplot(df_sum, aes(x = service_date, y = gated_entries)) +
-  geom_line() +
-  labs(x = "Date", y = "Total Gated Entries",
-       title = "Total Gated Entries per Day for All Stations") +
+ggplot(df_sum_day, aes(x = service_day, y = total_entries)) +
+  geom_col() +
+  labs(x = "Day of Week", y = "Total Gated Entries",
+       title = "Total Gated Entries per Day of Week in 2014 for All Stations") +
   theme_minimal() +
   theme(aspect.ratio = 1 / 5)
 ```
+MBTA usage drops by around half on weekends, and is lower on Monday than other weekdays.  
+
 ```{r}
 
 # Extract month from the 'service_date' column
@@ -104,35 +113,47 @@ df_sum <- df %>%
 
 # Create a line plot of sum of entries per month for all stations
 ggplot(df_sum, aes(x = month, y = total_entries)) +
-  geom_line() +
+  geom_col() +
   labs(x = "Month", y = "Total Gated Entries",
        title = "Total Gated Entries per Month for All Stations") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+There is fairly limited variance between the months, although there is somewhat of a decrease in the colder months. 
 ```{r}
 library(dplyr)
 ```
 ```{r}
-# Extract month from the 'service_date' column
-df$month <- format(df$service_date, "%Y-%m")
-
-# Filter data for January
-df_january <- df[df$month == "2014-01", ]
-
-# Aggregate the data by station and calculate the sum of entries for January
-df_january_sum <- df_january %>%
+# Aggregate the data by station and calculate the sum of entries
+df_station_sum <- df %>%
   group_by(station_name) %>%
   summarise(total_entries = sum(gated_entries))
 
-# Create a bar graph of total entries in January for each station
-ggplot(df_january_sum, aes(x = station_name, y = total_entries)) +
+# Create a bar graph of total entries for each station
+ggplot(df_station_sum, aes(x = station_name, y = total_entries)) +
   geom_bar(stat = "identity", fill = "skyblue") +
-  labs(x = "Station Name", y = "Total Entries in January",
-       title = "Total Entries in January for Each Station") +
+  labs(x = "Station Name", y = "Total Entries",
+       title = "Total Entries for Each Station") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+There is a large amount of variance between the stations, much more than any of the time factors. 
+
+```{r}
+# Aggregate the data by line and calculate the sum of entries for January
+df_line_sum <- df %>%
+  group_by(route_or_line) %>%
+  summarise(total_entries = sum(gated_entries))
+
+# Create a bar graph of total entries in January for each station
+ggplot(df_line_sum, aes(x = route_or_line, y = total_entries)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Line Name", y = "Total Entries",
+       title = "Total Entries for Each Line") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+There's a lot of variance between the lines, and perhaps that explains part of the variance between stations. The silver line is also barely used compared to the others, which is interesting. 
 \
 
 # Next Steps
