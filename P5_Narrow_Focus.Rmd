@@ -8,6 +8,15 @@ output:
 
 ---
 
+```{r}
+# Packages
+if (!"pacman" %in% installed.packages()){
+  install.packages("pacman")
+}
+#load pacman
+library(pacman)
+pacman::p_load("forcats","dplyr","readr","ggplot2")
+```
 
 Each group should hand in one html document for the following exercises. Throughout the exercises, keep in mind that your research topics, questions, and data might evolve throughout the course of the project. This checkpoint is simply a first step in narrowing these down.
 
