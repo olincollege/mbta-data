@@ -394,11 +394,16 @@ library(pacman)</code></pre>
 <h1><span class="header-section-number">4</span> Data</h1>
 <p>Identify the data sets you will use to explore the research questions above. These data sets may already be in csv form, you may acquire them (e.g., scraped with rvest, via public API, or from an SQL database), or you may plan on collecting some extra data. For each data set, summarize the following:</p>
 <ul>
-<li>data source:</li>
-<li>data description - what’s being measured?</li>
-<li>data limitations (eg: are the data recent? do they contain all variables you might want?)</li>
-<li>data dimensions - how much data do you have?</li>
-<li>how might the data be joined with other data you have?</li>
+<li><p>data source: MBTA Gated Station Entries - Historical</p></li>
+<li><p>data description - what’s being measured?: The count of gated station entries for each day for multiple years broken up in 30 minute increments</p></li>
+<li><p>data limitations (eg: are the data recent? do they contain all variables you might want?): The most recent data is two months old. This only contains ridership data for days and not data on any of the other things we are looking into.</p></li>
+<li><p>data dimensions - how much data do you have?: There are eleven csv files dating back to 2014. Each pof them has at least a million entries of six variables (excel won’t show the entire thing)</p></li>
+<li><p>how might the data be joined with other data you have?: date, time, and type of transportation could be combined with other data.</p></li>
+<li><p>data source: MBTA fuel and energy</p></li>
+<li><p>data description - what’s being measured?: The volume, miles traveled and efficiency of different energy sources used by the MBTA for different services over time.</p></li>
+<li><p>data limitations (eg: are the data recent? do they contain all variables you might want?): This was most recently updated in 2021. It does not contain information on ridership, but it can be extrapolated by the miles traveled.</p></li>
+<li><p>data dimensions - how much data do you have?: 288 observations of 8 variables</p></li>
+<li><p>how might the data be joined with other data you have?: year and type of transportation could be combined with other data.</p></li>
 </ul>
 <p><br />
 </p>
