@@ -75,6 +75,8 @@ Identify the data sets you will use to explore the research questions above. The
 
 Restate research question 1. Construct 3-4 relevant visualizations that provide insight on / help answer this question and piece these together to tell a short story. For each visualization, 1-2 sentences will suffice.
 
+How to quantify the environmental and social sustainability of the light rail (carbon emission per person)?
+
 
 ```{r}
 energy = read_csv("Fuel_and_Energy.csv")
@@ -88,6 +90,25 @@ ggplot(by_fuel, aes(x=Fuel_Source, y=total_miles)) +
   geom_col() + 
   labs(title="Total Miles Traveled by Fuel Source, 2016-2019", x="Fuel Source", y="Miles Traveled")
 ```
+
+```{r}
+
+energy_data <- read.csv("Fuel_and_Energy.csv") %>% 
+  filter(Volume > 0, Miles_Traveled != "NA") %>% 
+  select(-Efficiency, -ObjectId) %>% 
+  mutate(Efficiency = Volume/Miles_Traveled) %>% 
+  group_by(Mode, Units)
+
+
+
+ggplot(energy_data, aes(x=Year, y=Efficiency)) +
+  geom_point(aes(color=Mode)) +
+  facet_grid("Fuel_Source", scales = "free_y") +
+  labs(y="Efficiency (Volume/Miles Traveled)")
+  theme()
+  
+```
+it seems that the use of a gasoline has changed in efficiency over time, becoming more efficient an compressed natural gas is less efficient.
 \
 
 # Research Question 2 (and possibly 3)
@@ -182,9 +203,13 @@ There's a lot of variance between the lines, and perhaps that explains part of t
 
 Identify next steps in your analysis. Do you need additional data? Do you need to do more cleaning or wrangling? How might you narrow your research questions/hypotheses? What additional visualizations would be helpful? 
 
+we could gather more data about economic distribution across gated stations and or routes. The visualizations help to allow us to see what aspects of these questions should be pursued, such as comparing gated entries to total ridership data.
+
 \
 
 # Contributions
 
 Summarize each group member's specific contributions to this checkpoint assignment.
+
+we collectively worked on the first portion of the assignment then split to create our visualizations.
 
