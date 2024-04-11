@@ -16,7 +16,7 @@ if (!"pacman" %in% installed.packages()){
 }
 #load pacman
 library(pacman)
-pacman::p_load("forcats","dplyr","readr","ggplot2")
+pacman::p_load("forcats","dplyr","readr","ggplot2", "tidycensus", "sf", "scales")
 ```
 
 
@@ -28,7 +28,21 @@ df <- read.csv("GSE_by_year/GSE_2016.csv")
 
 ## Map visualisations
 ```{r}
+census_api_key("Find API key in shared doc")
 
+# looking at the median house-hold income
+df <- get_acs(variables = c("B19013_001"),
+              geography = "tract",
+              state = "Massachusetts",
+              county = "Suffolk",
+              year = 2022,
+              geometry = TRUE)
+
+
+ggplot(data = df) + 
+   geom_sf(aes(fill = estimate)) +
+   scale_fill_viridis_c("Median Household Income", labels = dollar) + 
+   theme_void()
 
 ```
 
