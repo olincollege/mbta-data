@@ -1,0 +1,47 @@
+---
+title: "main"
+output: html_document
+date: "2024-04-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+# Packages
+if (!"pacman" %in% installed.packages()){
+  install.packages("pacman")
+}
+#load pacman
+library(pacman)
+pacman::p_load("forcats","dplyr","readr","ggplot2")
+```
+
+
+## Import Data
+```{r}
+df <- read.csv("GSE_by_year/GSE_2016.csv")
+```
+
+
+## Map visualisations
+```{r}
+
+
+```
+
+
+## Plot correlations
+```{r}
+
+
+```
+
+
+## Other
+```{r}
+
+
+```
