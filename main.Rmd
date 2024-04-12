@@ -16,7 +16,12 @@ if (!"pacman" %in% installed.packages()){
 }
 #load pacman
 library(pacman)
-pacman::p_load("forcats","dplyr","readr","ggplot2")
+pacman::p_load("forcats","dplyr","readr","ggplot2", "geojsonsf", "sf", "purrr", "ggmap", "ggthemes")
+```
+
+API Keys: DO NOT COMMIT
+```{r}
+# stadiamap
 ```
 
 
@@ -27,9 +32,38 @@ df <- read.csv("GSE_by_year/GSE_2016.csv")
 
 
 ## Map visualisations
+
+
 ```{r}
+# Aggregate the data by station and calculate the sum of entries
+df_station_sum <- df %>%
+  group_by(station_name) %>%
+  summarise(total_entries = sum(gated_entries))
 
+# get stop location data
+tstops <- geojsonsf::geojson_sf("stops.geojson")
+tstops <- tstops %>% 
+  mutate(lon = unlist(map(tstops$geometry,1)),
+           lat = unlist(map(tstops$geometry,2)))
 
+stations <- left_join(df_station_sum, tstops, by=c("station_name"="name"))
+```
+
+```{r}
+  mymap <- get_stadiamap(
+    bbox = c(left = -71.1681, bottom = 42.2255, right = -70.9634, top = 42.4387), 
+    maptype = "stamen_toner_lite",
+    messaging = FALSE,
+    zoom =11)
+```
+
+```{r}
+ggmap(mymap) + # creates the map "background"
+  geom_point(data = stations, 
+             aes(x = lon, y = lat, color = total_entries), 
+             size=2 
+             )+
+  theme_map()
 ```
 
 
