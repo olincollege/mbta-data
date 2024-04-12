@@ -16,12 +16,13 @@ if (!"pacman" %in% installed.packages()){
 }
 #load pacman
 library(pacman)
-pacman::p_load("forcats","dplyr","readr","ggplot2", "geojsonsf", "sf", "purrr", "ggmap", "ggthemes")
+pacman::p_load("forcats","dplyr","readr","ggplot2", "geojsonsf", "sf", "purrr", "ggmap", "ggthemes", "tidycensus", "scales")
 ```
 
 API Keys: DO NOT COMMIT
 ```{r}
 # stadiamap
+
 ```
 
 
@@ -45,9 +46,27 @@ tstops <- geojsonsf::geojson_sf("stops.geojson")
 tstops <- tstops %>% 
   mutate(lon = unlist(map(tstops$geometry,1)),
            lat = unlist(map(tstops$geometry,2)))
-
 stations <- left_join(df_station_sum, tstops, by=c("station_name"="name"))
 ```
+
+```{r}
+census_api_key("Find API key in shared doc")
+
+# looking at the median house-hold income
+df <- get_acs(variables = c("B19013_001"),
+              geography = "tract",
+              state = "Massachusetts",
+              county = "Suffolk",
+              year = 2022,
+              geometry = TRUE)
+
+
+ggplot(data = df) + 
+   geom_sf(aes(fill = estimate)) +
+   scale_fill_viridis_c("Median Household Income", labels = dollar) + 
+   theme_void()
+```
+
 
 ```{r}
   mymap <- get_stadiamap(
