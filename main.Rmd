@@ -16,7 +16,7 @@ if (!"pacman" %in% installed.packages()){
 }
 #load pacman
 library(pacman)
-pacman::p_load("forcats","dplyr","readr","ggplot2", "geojsonsf", "sf", "purrr", "ggmap", "ggthemes", "tidycensus", "scales")
+pacman::p_load("forcats","dplyr","readr","ggplot2", "geojsonsf", "sf", "purrr", "ggmap", "ggthemes", "tidycensus", "scales", "patchwork","tidyverse")
 ```
 
 API Keys: DO NOT COMMIT
@@ -49,22 +49,145 @@ tstops <- tstops %>%
 stations <- left_join(df_station_sum, tstops, by=c("station_name"="name"))
 ```
 
-```{r}
-census_api_key("Find API key in shared doc")
+```{r, "median income"}
 
-# looking at the median house-hold income
-df <- get_acs(variables = c("B19013_001"),
-              geography = "tract",
-              state = "Massachusetts",
-              county = "Suffolk",
-              year = 2022,
-              geometry = TRUE)
+options(tigris_use_cache = TRUE)
+census_api_key("INSERT API KEY")
 
 
-ggplot(data = df) + 
-   geom_sf(aes(fill = estimate)) +
-   scale_fill_viridis_c("Median Household Income", labels = dollar) + 
-   theme_void()
+boston_income_16 <- get_acs(
+  state = "MA",
+  county = "Suffolk",
+  geography = "tract",
+  variables = "B19013_001",
+  geometry = TRUE,
+  year = 2016
+)
+
+boston_income_22 <- get_acs(
+  state = "MA",
+  county = "Suffolk",
+  geography = "tract",
+  variables = "B19013_001",
+  geometry = TRUE,
+  year = 2022
+)
+
+bi_1 <- boston_income_16 %>%
+  ggplot(aes(fill = estimate)) + 
+  geom_sf(color = NA) + 
+  theme_void() +
+  scale_fill_viridis_c(option = "inferno", labels = scales::dollar,limits = c(0,250000)) +
+  labs(fill = "Median Household income\n(2016 Census)", title = "Median Household income in Suffolk County")
+
+bi_2 <- boston_income_22 %>%
+  ggplot(aes(fill = estimate)) + 
+  geom_sf(color = NA) + 
+  theme_void() +
+  scale_fill_viridis_c(option = "inferno", labels = scales::dollar, limits = c(0,250000)) +
+  labs(fill = "Median Household income\n(2022 Census)")
+
+bi_1 + bi_2
+```
+```{r, "race facet plots"}
+racevars <- c(White = "B02001_002", 
+              Black = "B02001_003", 
+              Asian = "B02001_005", 
+              Hispanic = "B03001_003",
+              `Two or more` = "B02001_008")
+
+boston_race_16 <- get_acs(
+  geography = "tract",
+  variables = racevars,
+  state = "MA",
+  county = "Suffolk",
+  geometry = TRUE,
+  summary_var = "B02001_001",
+  year = 2016,
+) 
+boston_race_22 <- get_acs(
+  geography = "tract",
+  variables = racevars,
+  state = "MA",
+  county = "Suffolk",
+  geometry = TRUE,
+  summary_var = "B02001_001",
+  year = 2022,
+)
+
+
+br_1 <- boston_race_16 %>%
+  mutate(percent = 100 * (estimate / summary_est)) %>%
+  ggplot(aes(fill = percent)) +
+  facet_wrap(~variable) +
+  geom_sf(color = NA) +
+  theme_void() + 
+  scale_fill_viridis_c() + 
+  labs(fill = "% of population\n(2016 Census)", title = "Demographics of the Suffolk County")
+
+br_2 <- boston_race_22 %>%
+  mutate(percent = 100 * (estimate / summary_est)) %>%
+  ggplot(aes(fill = percent)) +
+  facet_wrap(~variable) +
+  geom_sf(color = NA) +
+  theme_void() + 
+  scale_fill_viridis_c() + 
+  labs(fill = "% of population\n(2022 Census)")
+
+br_1 + br_2
+```
+
+```{r, "MBTA usage"}
+
+transvars <- c(Subway = "B08006_010", 
+              Lightrail = "B08006_012")
+              
+boston_transport_16 <- get_acs(
+  state = "MA",
+  county = "Suffolk",
+  geography = "tract",
+  variables = transvars,
+  geometry = TRUE,
+  summary_var = "B08006_001",
+  year = 2016,
+)
+
+              
+boston_transport_22 <- get_acs(
+  state = "MA",
+  county = "Suffolk",
+  geography = "tract",
+  variables = transvars,
+  geometry = TRUE,
+  summary_var = "B08006_001",
+  year = 2022,
+)
+
+
+
+bt_1 <- boston_transport_16 %>%
+  group_by(GEOID) %>% 
+  summarise(estimate = sum(estimate), summary_est = mean(summary_est)) %>% 
+  mutate(percent = 100 * (estimate / summary_est)) %>% 
+  ggplot(aes(fill = percent)) +
+              geom_sf(color = NA) +
+              theme_void() + 
+              scale_fill_viridis_c(option = "turbo", limits = c(0, 100)) + 
+              labs(fill = "% of population that\n(2016 Census)", 
+                   title = "Percentage of Population that uses the Lightrail/Subway")
+
+bt_2 <- boston_transport_22 %>%
+  group_by(GEOID) %>% 
+  summarise(estimate = sum(estimate), summary_est = mean(summary_est)) %>% 
+  mutate(percent = 100 * (estimate / summary_est)) %>% 
+  ggplot(aes(fill = percent)) +
+              geom_sf(color = NA) +
+              theme_void() + 
+              scale_fill_viridis_c(option = "turbo", limits = c(0,100)) +
+              labs(fill = "% of population that\n(2022 Census)")
+
+bt_1 + bt_2
+
 ```
 
 
