@@ -78,14 +78,16 @@ bi_1 <- boston_income_16 %>%
   geom_sf(color = NA) + 
   theme_void() +
   scale_fill_viridis_c(option = "inferno", labels = scales::dollar,limits = c(0,250000)) +
-  labs(fill = "Median Household income\n(2016 Census)", title = "Median Household income in Suffolk County")
+  labs(title = "Median Household income in Suffolk County", subtitle = "2016 census") +
+  theme(legend.position = "None")
 
 bi_2 <- boston_income_22 %>%
   ggplot(aes(fill = estimate)) + 
   geom_sf(color = NA) + 
   theme_void() +
   scale_fill_viridis_c(option = "inferno", labels = scales::dollar, limits = c(0,250000)) +
-  labs(fill = "Median Household income\n(2022 Census)")
+  labs(fill = "Median Household income", subtitle = "2022 census") +
+  theme(legend.position ="right")
 
 bi_1 + bi_2
 ```
@@ -123,7 +125,8 @@ br_1 <- boston_race_16 %>%
   geom_sf(color = NA) +
   theme_void() + 
   scale_fill_viridis_c() + 
-  labs(fill = "% of population\n(2016 Census)", title = "Demographics of the Suffolk County")
+  labs(title = "Demographics of the Suffolk County", subtitle = "2016 census") +
+  theme(legend.position = "None")
 
 br_2 <- boston_race_22 %>%
   mutate(percent = 100 * (estimate / summary_est)) %>%
@@ -132,7 +135,8 @@ br_2 <- boston_race_22 %>%
   geom_sf(color = NA) +
   theme_void() + 
   scale_fill_viridis_c() + 
-  labs(fill = "% of population\n(2022 Census)")
+  labs(fill = "% of population", subtitle = "2022 census") +
+  theme(legend.position = "bottom")
 
 br_1 + br_2
 ```
@@ -173,8 +177,8 @@ bt_1 <- boston_transport_16 %>%
               geom_sf(color = NA) +
               theme_void() + 
               scale_fill_viridis_c(option = "turbo", limits = c(0, 100)) + 
-              labs(fill = "% of population that\n(2016 Census)", 
-                   title = "Percentage of Population that uses the Lightrail/Subway")
+              labs(title = "Percentage of Population that uses the Lightrail/Subway", subtitle = "2016 census") +
+  theme(legend.position = "None")
 
 bt_2 <- boston_transport_22 %>%
   group_by(GEOID) %>% 
@@ -184,7 +188,7 @@ bt_2 <- boston_transport_22 %>%
               geom_sf(color = NA) +
               theme_void() + 
               scale_fill_viridis_c(option = "turbo", limits = c(0,100)) +
-              labs(fill = "% of population that\n(2022 Census)")
+              labs(fill = "% of population", subtitle = "2022 census")
 
 bt_1 + bt_2
 
