@@ -52,7 +52,7 @@ stations <- left_join(df_station_sum, tstops, by=c("station_name"="name"))
 ```{r, "median income"}
 
 options(tigris_use_cache = TRUE)
-census_api_key("INSERT API KEY")
+census_api_key("bd9d9d7b7852d68a808c2fab5412f7b4a5ef5074")
 
 
 boston_income_16 <- get_acs(
@@ -143,8 +143,8 @@ br_1 + br_2
 
 ```{r, "MBTA usage"}
 
-transvars <- c(Subway = "B08006_010", 
-              Lightrail = "B08006_012")
+transvars <- c(Subway = "B08301_013", 
+              Lightrail = "B08301_012")
               
 boston_transport_16 <- get_acs(
   state = "MA",
@@ -152,7 +152,7 @@ boston_transport_16 <- get_acs(
   geography = "tract",
   variables = transvars,
   geometry = TRUE,
-  summary_var = "B08006_001",
+  summary_var = "B08301_001",
   year = 2016,
 )
 
@@ -163,7 +163,7 @@ boston_transport_22 <- get_acs(
   geography = "tract",
   variables = transvars,
   geometry = TRUE,
-  summary_var = "B08006_001",
+  summary_var = "B08301_001",
   year = 2022,
 )
 
