@@ -52,7 +52,7 @@ stations <- left_join(df_station_sum, tstops, by=c("station_name"="name"))
 ```{r, "median income"}
 
 options(tigris_use_cache = TRUE)
-census_api_key("INSERT API KEY")
+census_api_key("bd9d9d7b7852d68a808c2fab5412f7b4a5ef5074")
 
 
 boston_income_16 <- get_acs(
@@ -221,3 +221,62 @@ ggmap(mymap) + # creates the map "background"
 
 
 ```
+
+## Census Tract mapping 
+```{r}
+boston_tract_location <- get_acs(
+  state = "MA",
+  county = "Suffolk",
+  geography = "tract",
+  variables = transvars,
+  geometry = TRUE,
+  year = 2016,
+)
+
+boston_tract_location <- filter(boston_tract_location, variable == "Subway")
+```
+
+
+```{r}
+# find the "center point" of all the tract polygons
+boston_tract_location$center_of_geo <- st_coordinates(sf::st_centroid(x = boston_tract_location$geometry))
+```
+
+```{r}
+boston_station_location <- stations %>% 
+  filter(is.na(lat) == FALSE)
+```
+
+```{r}
+boston_tract_location$nearest_station <- ""
+
+# for every tract in the census
+for (i in 1:length(boston_tract_location$NAME)) {
+  # find distance between all station and the tract
+  boston_station_location$distance <- sqrt((boston_station_location$lat - boston_tract_location$center_of_geo[i, 2])^2 + (boston_station_location$lon - boston_tract_location$center_of_geo[i, 1])^2)
+  
+  # put the station name that has the shortest distance in the tract dataframe
+  boston_tract_location$nearest_station[i] <- boston_station_location$station_name[boston_station_location$distance == min(boston_station_location$distance)]
+}
+
+boston_station_location <- boston_station_location %>% 
+  select(-c('distance'))
+```
+
+```{r}
+census_stations <- boston_tract_location %>% 
+  ggplot(aes(fill = nearest_station)) +
+  geom_sf(color = NA) + 
+  theme_void() +
+  theme(
+    legend.text = element_text(size = 4)
+  )
+  
+census_stations
+```
+
+
+
+
+
+
