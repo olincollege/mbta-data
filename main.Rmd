@@ -282,5 +282,42 @@ census_stations
 
 
 
+## Normalize entries for population
+```{r}
+
+station16 <- read.csv("GSE_by_year/GSE_2016.csv")
+
+# Aggregate the data by station and calculate the sum of entries for 2016
+station_sum16 <- station16 %>%
+  group_by(station_name) %>%
+  summarise(total_entries = sum(gated_entries))
+
+station16 <- left_join(station_sum16, tstops, by=c("station_name"="name"))
+
+station22 <- read.csv("GSE_by_year/GSE_2022.csv")
+
+# Aggregate the data by station and calculate the sum of entries for 2022
+station_sum22 <- station22 %>%
+  group_by(station_name) %>%
+  summarise(total_entries = sum(gated_entries))
+
+station22 <- left_join(station_sum22, tstops, by=c("station_name"="name"))
+
+
+# Find population for 2016
+tract_station_population16 <- st_join(boston_tract_location, filter(boston_race_16, variable == "Hispanic"))
+tract_station_population16 <- group_by(tract_station_population16, nearest_station)
+station_populations16 <- summarise(tract_station_population16, population = sum(summary_est))
+
+station_populations16 <- st_join(station_populations16, station16)
+
+#Find population for 2022
+tract_station_population22 <- st_join(boston_tract_location, filter(boston_race_22, variable == "Hispanic"))
+tract_station_population22 <- group_by(tract_station_population22, nearest_station)
+station_populations22 <- summarise(tract_station_population22, population = sum(summary_est))
+
+station_populations22 <- st_join(station_populations22, station22)
+```
+
 
 
