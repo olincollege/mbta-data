@@ -16,7 +16,7 @@ if (!"pacman" %in% installed.packages()){
 }
 #load pacman
 library(pacman)
-pacman::p_load("forcats","dplyr","readr","ggplot2", "geojsonsf", "sf", "purrr", "ggmap", "ggthemes", "tidycensus", "scales", "patchwork","tidyverse")
+pacman::p_load("forcats","dplyr","readr","ggplot2", "geojsonsf", "sf", "purrr", "ggmap", "ggthemes", "tidycensus", "scales", "patchwork","tidyverse", "sfheaders")
 ```
 
 API Keys: DO NOT COMMIT
@@ -309,14 +309,32 @@ tract_station_population16 <- st_join(boston_tract_location, filter(boston_race_
 tract_station_population16 <- group_by(tract_station_population16, nearest_station)
 station_populations16 <- summarise(tract_station_population16, population = sum(summary_est))
 
-station_populations16 <- st_join(station_populations16, station16)
+#Convert 2016 stations to not have geometry
+station_populations16 <- sf_to_df(station_populations16, fill = TRUE, unlist = NULL)
+
+#join populations and station entries to have both and remove NAs
+station_populations16 <- left_join(station16, station_populations16, by=c("station_name"="nearest_station"))
+station_populations16 <- station_populations16 %>%
+  group_by(station_name) %>%
+  summarise(total_entries = mean(total_entries), population = mean(population), lon = mean(lon), lat = mean(lat))
+# REMOVE NAS HERE
+
+
 
 #Find population for 2022
 tract_station_population22 <- st_join(boston_tract_location, filter(boston_race_22, variable == "Hispanic"))
 tract_station_population22 <- group_by(tract_station_population22, nearest_station)
 station_populations22 <- summarise(tract_station_population22, population = sum(summary_est))
 
-station_populations22 <- st_join(station_populations22, station22)
+#Convert 2016 stations to not have geometry
+station_populations22 <- sf_to_df(station_populations22, fill = TRUE, unlist = NULL)
+
+#join populations and station entries to have both and remove NAs
+station_populations22 <- left_join(station22, station_populations22, by=c("station_name"="nearest_station"))
+station_populations22 <- station_populations22 %>%
+  group_by(station_name) %>%
+  summarise(total_entries = mean(total_entries), population = mean(population), lon = mean(lon), lat = mean(lat))
+# REMOVE NAS HERE
 ```
 
 
