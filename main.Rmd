@@ -58,7 +58,7 @@ census_api_key("bd9d9d7b7852d68a808c2fab5412f7b4a5ef5074")
 boston_income_16 <- get_acs(
   state = "MA",
   county = "Suffolk",
-  geography = "tract",
+  geography = "cbg",
   variables = "B19013_001",
   geometry = TRUE,
   year = 2016
@@ -67,7 +67,7 @@ boston_income_16 <- get_acs(
 boston_income_22 <- get_acs(
   state = "MA",
   county = "Suffolk",
-  geography = "tract",
+  geography = "cbg",
   variables = "B19013_001",
   geometry = TRUE,
   year = 2022
@@ -99,7 +99,7 @@ racevars <- c(White = "B02001_002",
               `Two or more` = "B02001_008")
 
 boston_race_16 <- get_acs(
-  geography = "tract",
+  geography = "cbg",
   variables = racevars,
   state = "MA",
   county = "Suffolk",
@@ -108,7 +108,7 @@ boston_race_16 <- get_acs(
   year = 2016,
 ) 
 boston_race_22 <- get_acs(
-  geography = "tract",
+  geography = "cbg",
   variables = racevars,
   state = "MA",
   county = "Suffolk",
@@ -149,7 +149,7 @@ transvars <- c(Subway = "B08301_013",
 boston_transport_16 <- get_acs(
   state = "MA",
   county = "Suffolk",
-  geography = "tract",
+  geography = "cbg",
   variables = transvars,
   geometry = TRUE,
   summary_var = "B08301_001",
@@ -160,7 +160,7 @@ boston_transport_16 <- get_acs(
 boston_transport_22 <- get_acs(
   state = "MA",
   county = "Suffolk",
-  geography = "tract",
+  geography = "cbg",
   variables = transvars,
   geometry = TRUE,
   summary_var = "B08301_001",
@@ -231,7 +231,7 @@ ggmap(mymap) + # creates the map "background"
 boston_tract_location <- get_acs(
   state = "MA",
   county = "Suffolk",
-  geography = "tract",
+  geography = "cbg",
   variables = transvars,
   geometry = TRUE,
   year = 2016,
