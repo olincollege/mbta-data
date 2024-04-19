@@ -319,6 +319,9 @@ station_populations16 <- station_populations16 %>%
   summarise(total_entries = mean(total_entries), population = mean(population), lon = mean(lon), lat = mean(lat))
 # REMOVE NAS HERE
 
+#normalize data
+station_populations16$norm_entries <- station_populations16$total_entries / station_populations16$population
+
 
 
 #Find population for 2022
@@ -335,6 +338,9 @@ station_populations22 <- station_populations22 %>%
   group_by(station_name) %>%
   summarise(total_entries = mean(total_entries), population = mean(population), lon = mean(lon), lat = mean(lat))
 # REMOVE NAS HERE
+
+#normalize data
+station_populations22$norm_entries <- station_populations22$total_entries / station_populations22$population
 ```
 
 
