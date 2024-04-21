@@ -22,6 +22,7 @@ pacman::p_load("forcats","dplyr","readr","ggplot2", "geojsonsf", "sf", "purrr", 
 API Keys: DO NOT COMMIT
 ```{r}
 # stadiamap
+census_api_key("INSERT API KEY")
 
 ```
 
@@ -52,7 +53,6 @@ stations <- left_join(df_station_sum, tstops, by=c("station_name"="name"))
 ```{r, "median income"}
 
 options(tigris_use_cache = TRUE)
-census_api_key("bd9d9d7b7852d68a808c2fab5412f7b4a5ef5074")
 
 
 boston_income_16 <- get_acs(
