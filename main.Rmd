@@ -308,41 +308,84 @@ station22 <- left_join(station_sum22, tstops, by=c("station_name"="name"))
 # Find population for 2016
 tract_station_population16 <- st_join(boston_tract_location, filter(boston_race_16, variable == "Hispanic"))
 tract_station_population16 <- group_by(tract_station_population16, nearest_station)
-station_populations16 <- summarise(tract_station_population16, population = sum(summary_est))
+norm_station_populations16 <- summarise(tract_station_population16, population = sum(summary_est))
 
 #Convert 2016 stations to not have geometry
-station_populations16 <- sf_to_df(station_populations16, fill = TRUE, unlist = NULL)
+norm_station_populations16 <- sf_to_df(norm_station_populations16, fill = TRUE, unlist = NULL)
 
 #join populations and station entries to have both and remove NAs
-station_populations16 <- left_join(station16, station_populations16, by=c("station_name"="nearest_station"))
-station_populations16 <- station_populations16 %>%
+norm_station_populations16 <- left_join(station16, norm_station_populations16, by=c("station_name"="nearest_station"))
+norm_station_populations16 <- norm_station_populations16 %>%
   group_by(station_name) %>%
   summarise(total_entries = mean(total_entries), population = mean(population), lon = mean(lon), lat = mean(lat))
 # REMOVE NAS HERE
 
 #normalize data
-station_populations16$norm_entries <- station_populations16$total_entries / station_populations16$population
+norm_station_populations16$norm_entries <- norm_station_populations16$total_entries / norm_station_populations16$population
 
 
 
 #Find population for 2022
 tract_station_population22 <- st_join(boston_tract_location, filter(boston_race_22, variable == "Hispanic"))
 tract_station_population22 <- group_by(tract_station_population22, nearest_station)
-station_populations22 <- summarise(tract_station_population22, population = sum(summary_est))
+norm_station_populations22 <- summarise(tract_station_population22, population = sum(summary_est))
 
 #Convert 2016 stations to not have geometry
-station_populations22 <- sf_to_df(station_populations22, fill = TRUE, unlist = NULL)
+norm_station_populations22 <- sf_to_df(norm_station_populations22, fill = TRUE, unlist = NULL)
 
 #join populations and station entries to have both and remove NAs
-station_populations22 <- left_join(station22, station_populations22, by=c("station_name"="nearest_station"))
-station_populations22 <- station_populations22 %>%
+norm_station_populations22 <- left_join(station22, norm_station_populations22, by=c("station_name"="nearest_station"))
+norm_station_populations22 <- norm_station_populations22 %>%
   group_by(station_name) %>%
   summarise(total_entries = mean(total_entries), population = mean(population), lon = mean(lon), lat = mean(lat))
 # REMOVE NAS HERE
 
 #normalize data
-station_populations22$norm_entries <- station_populations22$total_entries / station_populations22$population
+norm_station_populations22$norm_entries <- norm_station_populations22$total_entries / norm_station_populations22$population
 ```
+
+## Make linear regression models
+
+```{r}
+# Join normalized entries with racial data
+# for 2016
+station_races16<-left_join(norm_station_populations16,boston_tract_location, by = c("station_name"="nearest_station"))
+station_race16 <- left_join(select(station_races16,-c("variable", "estimate","moe")), boston_race_16) %>% mutate(percent = 100 * (estimate / summary_est))
+station_race16$race <- station_race16$variable
+
+# for 2022
+station_races22<-left_join(norm_station_populations22,boston_tract_location, by = c("station_name"="nearest_station"))
+station_race22 <- left_join(select(station_races22,-c("variable", "estimate","moe")), select(boston_race_22, c("GEOID","variable","estimate","summary_est", "moe")), by=c("GEOID"="GEOID")) %>% mutate(percent = 100 * (estimate / summary_est))
+station_race22$race <- station_race22$variable
+
+
+# Join normalized entries with income data
+# for 2016
+station_race16 <- left_join(select(station_race16,-c("variable", "estimate","moe")), boston_income_16)
+station_race16$income <- station_race16$estimate
+station_race16 <- select(station_race16, c("norm_entries","station_name","percent","income","race"))
+
+# for 2022
+station_race22 <- left_join(select(station_race22,-c("variable", "estimate","moe")), select(boston_income_22, c("GEOID","estimate")))
+station_race22$income <- station_race22$estimate
+station_race22 <- select(station_race22, c("norm_entries","station_name","percent","income","race"))
+
+# Remove NA and hispanic race because we don't have enough data for that
+station_race16 <- filter(station_race16, race !="Hispanic")
+station_race22 <- filter(station_race22, race !="Hispanic")
+
+# Plot
+plot2016 <- ggplot(station_race16, aes(x=percent, y=norm_entries,color=race)) +
+  geom_point() +
+  facet_wrap(~race)
+
+plot2022 <- ggplot(station_race22, aes(x=percent, y=norm_entries,color=race)) +
+  geom_point() +
+  facet_wrap(~race)
+
+plot2016 + plot2022
+```
+
 
 
 
