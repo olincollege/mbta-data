@@ -22,7 +22,12 @@ pacman::p_load("forcats","dplyr","readr","ggplot2", "geojsonsf", "sf", "purrr", 
 API Keys: DO NOT COMMIT
 ```{r}
 # stadiamap
+<<<<<<< HEAD
 census_api_key("9b9d749776c6ac6d4a35545acba3bbb70b773274")
+=======
+register_stadiamaps("YOUR_API_KEY_HERE", write = FALSE)
+census_api_key("YOUR_API_KEY_HERE")
+>>>>>>> origin
 
 ```
 
@@ -268,13 +273,13 @@ boston_station_location <- boston_station_location %>%
 ```
 
 ```{r}
-census_stations <- boston_tract_location %>% 
-  ggplot(aes(fill = nearest_station)) +
-  geom_sf(color = NA) + 
+census_stations <- ggplot() +
+  geom_sf(data = boston_tract_location, aes(fill = nearest_station), color = NA) + 
   theme_void() +
   theme(
     legend.text = element_text(size = 4)
-  )
+  )+
+  geom_point(data = stations, aes(x = lon, y = lat))
   
 census_stations
 ```
