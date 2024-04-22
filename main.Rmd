@@ -22,8 +22,8 @@ pacman::p_load("forcats","dplyr","readr","ggplot2", "geojsonsf", "sf", "purrr", 
 API Keys: DO NOT COMMIT
 ```{r}
 # stadiamap
-register_stadiamaps("YOUR_API_KEY_HERE", write = FALSE)
-census_api_key("YOUR_API_KEY_HERE")
+register_stadiamaps("YOUR_API_KEY_HERE", write = TRUE)
+# census_api_key("YOUR_API_KEY_HERE")
 
 ```
 
@@ -269,14 +269,16 @@ boston_station_location <- boston_station_location %>%
 ```
 
 ```{r}
+# This was more so for checking we assigned the correct stations, so it doesn't need to be included in the final report - Sherry
+
 census_stations <- ggplot() +
-  geom_sf(data = boston_tract_location, aes(fill = nearest_station), color = NA) + 
+  geom_sf(data = boston_tract_location, aes(fill = nearest_station), color = 'black') +
   theme_void() +
   theme(
     legend.text = element_text(size = 4)
   )+
   geom_point(data = stations, aes(x = lon, y = lat))
-  
+
 census_stations
 ```
 
@@ -385,6 +387,72 @@ plot2022 <- ggplot(station_race22, aes(x=percent, y=norm_entries,color=race)) +
 
 plot2016 + plot2022
 ```
+
+
+```{r}
+norm_station_entry_22 <- ggplot() +
+  geom_sf(data = boston_tract_location, color = NA, fill = "gray") +
+  theme_void() +
+  theme(
+    legend.text = element_text(size = 4)
+  )+ 
+  geom_point(data = station_populations22, 
+   aes(x = lon, y = lat, size = norm_entries), 
+   color = "black",
+   fill = "blue",
+   shape = 21
+   )+
+  ggtitle("Normalized Lightrail Station Entry 2022")
+
+norm_station_entry_22
+```
+
+```{r}
+norm_station_entry_16 <- ggplot() +
+  geom_sf(data = boston_tract_location, color = NA, fill = "gray") +
+  theme_void() +
+  theme(
+    legend.text = element_text(size = 4)
+  )+ 
+  geom_point(data = station_populations16, 
+   aes(x = lon, y = lat, size = norm_entries), 
+   color = "black",
+   fill = "blue",
+   shape = 21
+   )+
+  ggtitle("Normalized Lightrail Station Entry 2016")
+
+norm_station_entry_16
+```
+
+```{r}
+station_populations22$diff_norm_entry <- station_populations22$norm_entries - station_populations16$norm_entries
+
+diff_norm_station_entry <- ggplot() +
+  geom_sf(data = boston_tract_location, color = NA, fill = "gray") +
+  theme_void() +
+  theme(
+    legend.text = element_text(size = 4)
+  )+ 
+  geom_point(data = station_populations22, 
+   aes(x = lon, y = lat, fill = diff_norm_entry), 
+   color = "black",
+   shape = 21
+   )+
+  ggtitle("Difference in Light Rail Usage from 2016 - 2022")+ 
+  geom_point(data = station_populations22, 
+   aes(x = lon, y = lat, fill = diff_norm_entry), 
+   color = "black",
+   shape = 21,
+   size = 3
+   )+
+  scale_fill_gradient(low = "red", high = "yellow", na.value = NA)
+
+diff_norm_station_entry
+```
+
+
+
 
 
 
