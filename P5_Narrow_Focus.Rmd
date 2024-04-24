@@ -126,8 +126,7 @@ What factors affect mbta light rail ridership (COVID lockdown, day of the week, 
 
 
 ```{r}
-# Load required library
-library(ggplot2)
+
 
 # Read the CSV file
 df <- read.csv("GSE_by_year/GSE_2014.csv")

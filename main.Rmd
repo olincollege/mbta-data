@@ -22,7 +22,7 @@ pacman::p_load("forcats","dplyr","readr","ggplot2", "geojsonsf", "sf", "purrr", 
 API Keys: DO NOT COMMIT
 ```{r}
 # stadiamap
-
+register_stadiamaps("738066bf-129d-4b4d-971c-3e42bd007b44", write = FALSE)
 ```
 
 
@@ -43,10 +43,10 @@ df_station_sum <- df %>%
 
 # get stop location data
 tstops <- geojsonsf::geojson_sf("stops.geojson")
-tstops <- tstops %>% 
+tstops1 <- tstops %>% 
   mutate(lon = unlist(map(tstops$geometry,1)),
            lat = unlist(map(tstops$geometry,2)))
-stations <- left_join(df_station_sum, tstops, by=c("station_name"="name"))
+stations <- left_join(df_station_sum, tstops1, by=c("station_name"="name"))
 ```
 
 ```{r, "median income"}
@@ -319,7 +319,7 @@ station_populations16 <- station_populations16 %>%
   summarise(total_entries = mean(total_entries), population = mean(population), lon = mean(lon), lat = mean(lat))
 # REMOVE NAS HERE
 
-
+station_populations16 <- left_join(station_populations16, station16, by=c("nearest_station" = "station_name"))
 
 #Find population for 2022
 tract_station_population22 <- st_join(boston_tract_location, filter(boston_race_22, variable == "Hispanic"))
