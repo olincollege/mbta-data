@@ -22,7 +22,7 @@ pacman::p_load("forcats","dplyr","readr","ggplot2", "geojsonsf", "sf", "purrr", 
 API Keys: DO NOT COMMIT
 ```{r}
 # stadiamap
-census_api_key("INSERT API KEY")
+census_api_key("bd9d9d7b7852d68a808c2fab5412f7b4a5ef5074")
 
 ```
 
@@ -94,8 +94,7 @@ bi_1 + bi_2
 ```{r, "race facet plots"}
 racevars <- c(White = "B02001_002", 
               Black = "B02001_003", 
-              Asian = "B02001_005", 
-              Hispanic = "B03001_003",
+              Asian = "B02001_005",
               `Two or more` = "B02001_008")
 
 boston_race_16 <- get_acs(
