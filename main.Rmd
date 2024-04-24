@@ -526,6 +526,21 @@ norm_station_entry_16 <- ggplot() +
 norm_station_entry_16
 ```
 ## Regression on Gated Entry vs income
+
+```{r}
+lm_entry_income <- lm(norm_entries ~ income, data = station_race16)
+summary(lm_entry_income)
+```
+```{r}
+plot(station_race16$income,station_race16$norm_entries,
+     xlab = 'median income',
+     ylab = 'normalized gated entries',
+     main = 'Scatter Plot of the normalized gated entries vs median income'
+     )
+
+```
+
+
 ```{r}
 coord <- boston_income_16$geometry[[1]][[1]][[1]][1,]
 
