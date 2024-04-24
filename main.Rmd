@@ -26,8 +26,8 @@ pacman::p_load(
 API Keys: DO NOT COMMIT
 ```{r}
 # stadiamap
-register_stadiamaps("c9c4a077-1a8c-41aa-96b1-808182a75e27", write = TRUE)
-# census_api_key("YOUR_API_KEY_HERE")
+register_stadiamaps("YOUR_API_KEY_HERE", write = TRUE)
+census_api_key("YOUR_API_KEY_HERE", install = TRUE)
 ```
 
 
