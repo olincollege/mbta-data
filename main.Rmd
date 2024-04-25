@@ -532,75 +532,48 @@ lm_entry_income <- lm(norm_entries ~ income, data = station_race16)
 summary(lm_entry_income)
 ```
 ```{r}
-plot(station_race16$income,station_race16$norm_entries,
-     xlab = 'median income',
-     ylab = 'normalized gated entries',
-     main = 'Scatter Plot of the normalized gated entries vs median income'
-     )
-
+ggplot()+geom_point(aes(station_race16$income,station_race16$norm_entries))+
+  geom_line(aes(station_race16$income, predict(lm_entry_income, newdata = station_race16)))+
+  ggtitle('normalized gated entries vs. income')+
+  xlab('median income')+
+  ylab('normalized gated entries')
 ```
+## Linear Regression on Filtered data
+```{r}
+# Filter data for entries more than 125 (outliers)
+filtered_data <- subset(station_race16, norm_entries < 125)
+# Filter data for income more than 125000 (too less data points)
+filtered_data <- subset(filtered_data, income < 125000)
 
+lm_entry_income_filtered <- lm(norm_entries ~ income, data = station_race16)
+summary(lm_entry_income_filtered)
+
+# Plotting
+ggplot(filtered_data) +
+  geom_point(aes(income, norm_entries)) +
+  geom_line(aes(income, predict(lm_entry_income_filtered, newdata = filtered_data))) +
+  ggtitle('Normalized Gated Entries vs. Income') +
+  xlab('median income')+
+  ylab('filtered normalized gated entries')
+```
+## Regression on Gated Entry vs race
 
 ```{r}
-coord <- boston_income_16$geometry[[1]][[1]][[1]][1,]
-
-lon <- coord[[1]]
-lat <- coord[[2]]
-lat
+lm_entry_income <- lm(norm_entries ~ race, data = station_race16)
+summary(lm_entry_income)
 ```
 ```{r}
-# Extract longitude and latitude from boston_income_16 dataset
-boston_income_16 <- boston_income_16 %>%
-  mutate(lon = geometry[[1]][[1]][[1]][1,][[1]],
-         lat = geometry[[1]][[1]][[1]][1,][[2]])
-         
-boston_income_16
-```
-```{r}
-
-# Round the longitude and latitude to 3 decimal points
-boston_income_16$lon <- round(boston_income_16$lon, 3)
-boston_income_16$lat <- round(boston_income_16$lat, 3)
-
-# Round longitude and latitude in norm_station_populations16 to 3 decimal points
-norm_station_populations16$lon <- round(norm_station_populations16$lon, 3)
-norm_station_populations16$lat <- round(norm_station_populations16$lat, 3)
-
-# Merge datasets based on rounded longitude and latitude
-merged_data <- merge(boston_income_16, norm_station_populations16, by = c("lon", "lat"), all = TRUE)
-
-# View the merged dataset
-print(merged_data)
 
 ```
 
 ```{r}
-# Merge datasets based on common geographical identifier (if available)
-merged_data <- merge(boston_income_16, norm_station_populations16, by.x = "GEOID", by.y = "station_name", all = TRUE)
-
-# Data cleaning and preprocessing (if needed)
-
-# Check for missing values
-sum(is.na(merged_data))
-
-# If there are missing values, handle them appropriately (e.g., imputation)
-
-# Fit a regression model
-model <- lm(estimate ~ total_entries, data = merged_data)
-
-# Summary of the regression model
-summary(model)
-
-# Assess the model's goodness of fit
-# You can use metrics like R-squared, Adjusted R-squared, residuals analysis, etc.
-
-# Predictions (if needed)
-# predicted_values <- predict(model, newdata = test_data)
-
-# Interpret the results
-
-
+ggplot()+geom_point(aes(station_race16$race,station_race16$norm_entries))+
+  geom_line(aes(station_race16$race, predict(lm_entry_income, newdata = station_race16)))+
+  ggtitle('normalized gated entries vs. race')+
+  xlab('normalized gated entries')+
+  ylab('median race')
 ```
+
 
 ```{r}
 station_populations_16_22 <- norm_station_populations22
