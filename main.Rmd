@@ -25,9 +25,8 @@ pacman::p_load(
 
 API Keys: DO NOT COMMIT
 ```{r}
-
-register_stadiamaps("YOUR_API_KEY_HERE", write = TRUE)
-
+# stadiamap
+# register_stadiamaps("YOUR_API_KEY_HERE", write = TRUE)
 # census_api_key("YOUR_API_KEY_HERE")
 ```
 
@@ -48,14 +47,12 @@ df_station_sum <- df %>%
 
 # get stop location data
 tstops <- geojsonsf::geojson_sf("stops.geojson")
-
 tstops <- tstops %>%
   mutate(
     lon = unlist(map(tstops$geometry, 1)),
     lat = unlist(map(tstops$geometry, 2))
   )
 stations <- left_join(df_station_sum, tstops, by = c("station_name" = "name"))
-
 ```
 
 ```{r, "median income"}
@@ -374,15 +371,11 @@ norm_station_populations16 <- norm_station_populations16 %>%
   )
 # REMOVE NAS HERE
 
-
-station_populations16 <- left_join(station_populations16, station16, by=c("nearest_station" = "station_name"))
-
 # normalize data
 norm_station_populations16$norm_entries <-
   norm_station_populations16$total_entries /
     norm_station_populations16$population
 ```
-
 
 ```{r}
 # Find population for 2022
@@ -397,17 +390,6 @@ norm_station_populations22 <- summarise(
   population = sum(summary_est)
 )
 
-#Find population for 2022
-tract_station_population22 <- st_join(boston_tract_location, filter(boston_race_22, variable == "Hispanic"))
-tract_station_population22 <- group_by(tract_station_population22, nearest_station)
-norm_station_populations22 <- summarise(tract_station_population22, population = sum(summary_est))
-
-#Convert 2016 stations to not have geometry
-norm_station_populations22 <- sf_to_df(norm_station_populations22, fill = TRUE, unlist = NULL)
-
-#join populations and station entries to have both and remove NAs
-norm_station_populations22 <- left_join(station22, norm_station_populations22, by=c("station_name"="nearest_station"))
-
 # Convert 2016 stations to not have geometry
 norm_station_populations22 <- sf_to_df(
   norm_station_populations22,
@@ -419,7 +401,6 @@ norm_station_populations22 <- left_join(
   station22, norm_station_populations22,
   by = c("station_name" = "nearest_station")
 )
-
 norm_station_populations22 <- norm_station_populations22 %>%
   group_by(station_name) %>%
   summarise(
@@ -545,21 +526,6 @@ norm_station_entry_16 <- ggplot() +
 norm_station_entry_16
 ```
 ## Regression on Gated Entry vs income
-
-```{r}
-lm_entry_income <- lm(norm_entries ~ income, data = station_race16)
-summary(lm_entry_income)
-```
-```{r}
-plot(station_race16$income,station_race16$norm_entries,
-     xlab = 'median income',
-     ylab = 'normalized gated entries',
-     main = 'Scatter Plot of the normalized gated entries vs median income'
-     )
-
-```
-
-
 ```{r}
 coord <- boston_income_16$geometry[[1]][[1]][[1]][1,]
 
@@ -622,14 +588,19 @@ summary(model)
 ```
 
 ```{r}
-station_populations_16_22 <- norm_station_populations22
-station_populations_16_22$diff_norm_entry <- norm_station_populations22$norm_entries - norm_station_populations16$norm_entries
+station_populations_16_22 <- norm_station_populations22 %>% 
+  filter(!is.na(norm_entries))
+
+for (i in 1:length(station_populations_16_22$station_name)){
+  norm_entry_16 <- norm_station_populations16$norm_entries[norm_station_populations16$station_name == station_populations_16_22$station_name[i]]
+  norm_entry_22 <- station_populations_16_22$norm_entries
+  station_populations_16_22$diff_norm_entry[i] <- (norm_entry_22 - norm_entry_16) / norm_entry_16 * 100
+}
+  
+
 diff_norm_station_entry <- ggplot() +
   geom_sf(data = boston_tract_location, color = NA, fill = "gray") +
   theme_void() +
-  theme(
-    legend.text = element_text(size = 4)
-  ) +
   geom_point(
     data = station_populations_16_22,
     aes(x = lon, y = lat, fill = diff_norm_entry),
@@ -637,7 +608,7 @@ diff_norm_station_entry <- ggplot() +
     shape = 21
   ) +
   ggtitle("Difference in Light Rail Usage from 2016 - 2022") +
-  scale_fill_gradient(low = "red", high = "yellow", na.value = NA)
+  scale_fill_gradient2(low = "red", mid = "yellow", high = "green", midpoint = 200, na.value = NA, name = "Percentage of Rider Increase in 2022")
 
 diff_norm_station_entry
 ```
