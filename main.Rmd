@@ -603,7 +603,7 @@ diff_norm_station_entry <- ggplot() +
     shape = 21
   ) +
   ggtitle("Difference in Light Rail Usage from 2016 - 2022") +
-  scale_fill_gradient(low = "red", high = "yellow", na.value = NA)
+  scale_fill_gradient(low = "red", high = "yellow", na.value = NA, name = "Additional Riders in 2022")
 
 diff_norm_station_entry
 ```
