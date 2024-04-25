@@ -11,21 +11,24 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 # Packages
-if (!"pacman" %in% installed.packages()){
+if (!"pacman" %in% installed.packages()) {
   install.packages("pacman")
 }
-#load pacman
+# load pacman
 library(pacman)
-pacman::p_load("forcats","dplyr","readr","ggplot2", "geojsonsf", "sf", "purrr", "ggmap", "ggthemes", "tidycensus", "scales", "patchwork","tidyverse", "sfheaders")
+pacman::p_load(
+  "forcats", "dplyr", "readr", "ggplot2", "sfheaders",
+  "geojsonsf", "sf", "purrr", "ggmap", "ggthemes",
+  "tidycensus", "scales", "patchwork", "tidyverse",
+)
 ```
 
 API Keys: DO NOT COMMIT
 ```{r}
-# stadiamap
 
 register_stadiamaps("YOUR_API_KEY_HERE", write = TRUE)
-# census_api_key("YOUR_API_KEY_HERE")
 
+# census_api_key("YOUR_API_KEY_HERE")
 ```
 
 
@@ -37,7 +40,6 @@ df <- read.csv("GSE_by_year/GSE_2016.csv")
 
 ## Map visualisations
 
-
 ```{r}
 # Aggregate the data by station and calculate the sum of entries
 df_station_sum <- df %>%
@@ -46,14 +48,17 @@ df_station_sum <- df %>%
 
 # get stop location data
 tstops <- geojsonsf::geojson_sf("stops.geojson")
-tstops1 <- tstops %>% 
-  mutate(lon = unlist(map(tstops$geometry,1)),
-           lat = unlist(map(tstops$geometry,2)))
-stations <- left_join(df_station_sum, tstops1, by=c("station_name"="name"))
+
+tstops <- tstops %>%
+  mutate(
+    lon = unlist(map(tstops$geometry, 1)),
+    lat = unlist(map(tstops$geometry, 2))
+  )
+stations <- left_join(df_station_sum, tstops, by = c("station_name" = "name"))
+
 ```
 
 ```{r, "median income"}
-
 options(tigris_use_cache = TRUE)
 
 
@@ -76,29 +81,42 @@ boston_income_22 <- get_acs(
 )
 
 bi_1 <- boston_income_16 %>%
-  ggplot(aes(fill = estimate)) + 
-  geom_sf(color = NA) + 
+  ggplot(aes(fill = estimate)) +
+  geom_sf(color = NA) +
   theme_void() +
-  scale_fill_viridis_c(option = "inferno", labels = scales::dollar,limits = c(0,250000)) +
-  labs(title = "Median Household income in Suffolk County", subtitle = "2016 census") +
+  scale_fill_viridis_c(
+    option = "inferno",
+    labels = scales::dollar,
+    limits = c(0, 250000)
+  ) +
+  labs(
+    title = "Median Household income in Suffolk County",
+    subtitle = "2016 census"
+  ) +
   theme(legend.position = "None")
 
 bi_2 <- boston_income_22 %>%
-  ggplot(aes(fill = estimate)) + 
-  geom_sf(color = NA) + 
+  ggplot(aes(fill = estimate)) +
+  geom_sf(color = NA) +
   theme_void() +
-  scale_fill_viridis_c(option = "inferno", labels = scales::dollar, limits = c(0,250000)) +
+  scale_fill_viridis_c(
+    option = "inferno",
+    labels = scales::dollar,
+    limits = c(0, 250000)
+  ) +
   labs(fill = "Median Household income", subtitle = "2022 census") +
-  theme(legend.position ="right")
+  theme(legend.position = "right")
 
 bi_1 + bi_2
 ```
 ```{r, "race facet plots"}
-racevars <- c(White = "B02001_002", 
-              Black = "B02001_003", 
-              Asian = "B02001_005", 
-              Hispanic = "B03001_003",
-              `Two or more` = "B02001_008")
+racevars <- c(
+  White = "B02001_002",
+  Black = "B02001_003",
+  Asian = "B02001_005",
+  Hispanic = "B03001_003",
+  `Two or more` = "B02001_008"
+)
 
 boston_race_16 <- get_acs(
   geography = "cbg",
@@ -108,7 +126,7 @@ boston_race_16 <- get_acs(
   geometry = TRUE,
   summary_var = "B02001_001",
   year = 2016,
-) 
+)
 boston_race_22 <- get_acs(
   geography = "cbg",
   variables = racevars,
@@ -125,9 +143,12 @@ br_1 <- boston_race_16 %>%
   ggplot(aes(fill = percent)) +
   facet_wrap(~variable) +
   geom_sf(color = NA) +
-  theme_void() + 
-  scale_fill_viridis_c() + 
-  labs(title = "Demographics of the Suffolk County", subtitle = "2016 census") +
+  theme_void() +
+  scale_fill_viridis_c() +
+  labs(
+    title = "Demographics of the Suffolk County",
+    subtitle = "2016 census"
+  ) +
   theme(legend.position = "None")
 
 br_2 <- boston_race_22 %>%
@@ -135,8 +156,8 @@ br_2 <- boston_race_22 %>%
   ggplot(aes(fill = percent)) +
   facet_wrap(~variable) +
   geom_sf(color = NA) +
-  theme_void() + 
-  scale_fill_viridis_c() + 
+  theme_void() +
+  scale_fill_viridis_c() +
   labs(fill = "% of population", subtitle = "2022 census") +
   theme(legend.position = "bottom")
 
@@ -144,10 +165,11 @@ br_1 + br_2
 ```
 
 ```{r, "MBTA usage"}
+transvars <- c(
+  Subway = "B08301_013",
+  Lightrail = "B08301_012"
+)
 
-transvars <- c(Subway = "B08301_013", 
-              Lightrail = "B08301_012")
-              
 boston_transport_16 <- get_acs(
   state = "MA",
   county = "Suffolk",
@@ -158,7 +180,6 @@ boston_transport_16 <- get_acs(
   year = 2016,
 )
 
-              
 boston_transport_22 <- get_acs(
   state = "MA",
   county = "Suffolk",
@@ -169,48 +190,54 @@ boston_transport_22 <- get_acs(
   year = 2022,
 )
 
-
-
 bt_1 <- boston_transport_16 %>%
-  group_by(GEOID) %>% 
-  summarise(estimate = sum(estimate), summary_est = mean(summary_est)) %>% 
-  mutate(percent = 100 * (estimate / summary_est)) %>% 
+  group_by(GEOID) %>%
+  summarise(estimate = sum(estimate), summary_est = mean(summary_est)) %>%
+  mutate(percent = 100 * (estimate / summary_est)) %>%
   ggplot(aes(fill = percent)) +
-              geom_sf(color = NA) +
-              theme_void() + 
-              scale_fill_viridis_c(option = "turbo", limits = c(0, 100)) + 
-              labs(title = "Percentage of Population that uses the Lightrail/Subway", subtitle = "2016 census") +
+  geom_sf(color = NA) +
+  theme_void() +
+  scale_fill_viridis_c(option = "turbo", limits = c(0, 100)) +
+  labs(
+    title = "Percentage of Population \n
+      that uses the Lightrail/Subway",
+    subtitle = "2016 census"
+  ) +
   theme(legend.position = "None")
 
 bt_2 <- boston_transport_22 %>%
-  group_by(GEOID) %>% 
-  summarise(estimate = sum(estimate), summary_est = mean(summary_est)) %>% 
-  mutate(percent = 100 * (estimate / summary_est)) %>% 
+  group_by(GEOID) %>%
+  summarise(estimate = sum(estimate), summary_est = mean(summary_est)) %>%
+  mutate(percent = 100 * (estimate / summary_est)) %>%
   ggplot(aes(fill = percent)) +
-              geom_sf(color = NA) +
-              theme_void() + 
-              scale_fill_viridis_c(option = "turbo", limits = c(0,100)) +
-              labs(fill = "% of population", subtitle = "2022 census")
+  geom_sf(color = NA) +
+  theme_void() +
+  scale_fill_viridis_c(option = "turbo", limits = c(0, 100)) +
+  labs(fill = "% of population", subtitle = "2022 census")
 
 bt_1 + bt_2
-
 ```
 
 
 ```{r}
-  mymap <- get_stadiamap(
-    bbox = c(left = -71.1681, bottom = 42.2255, right = -70.9634, top = 42.4387), 
-    maptype = "stamen_toner_lite",
-    messaging = FALSE,
-    zoom =11)
+mymap <- get_stadiamap(
+  bbox = c(
+    left = -71.1681, bottom = 42.2255,
+    right = -70.9634, top = 42.4387
+  ),
+  maptype = "stamen_toner_lite",
+  messaging = FALSE,
+  zoom = 11
+)
 ```
 
 ```{r}
 ggmap(mymap) + # creates the map "background"
-  geom_point(data = stations, 
-             aes(x = lon, y = lat, color = total_entries), 
-             size=2 
-             )+
+  geom_point(
+    data = stations,
+    aes(x = lon, y = lat, color = total_entries),
+    size = 2
+  ) +
   theme_map()
 ```
 
@@ -218,13 +245,11 @@ ggmap(mymap) + # creates the map "background"
 ## Plot correlations
 ```{r}
 
-
 ```
 
 
 ## Other
 ```{r}
-
 
 ```
 
@@ -239,17 +264,21 @@ boston_tract_location <- get_acs(
   year = 2016,
 )
 
-boston_tract_location <- filter(boston_tract_location, variable == "Subway")
+boston_tract_location <- filter(
+  boston_tract_location,
+  variable == "Subway"
+)
 ```
 
 
 ```{r}
 # find the "center point" of all the tract polygons
-boston_tract_location$center_of_geo <- st_coordinates(sf::st_centroid(x = boston_tract_location$geometry))
+boston_tract_location$center_of_geo <-
+  st_coordinates(sf::st_centroid(x = boston_tract_location$geometry))
 ```
 
 ```{r}
-boston_station_location <- stations %>% 
+boston_station_location <- stations %>%
   filter(is.na(lat) == FALSE)
 ```
 
@@ -259,25 +288,37 @@ boston_tract_location$nearest_station <- ""
 # for every tract in the census
 for (i in 1:length(boston_tract_location$NAME)) {
   # find distance between all station and the tract
-  boston_station_location$distance <- sqrt((boston_station_location$lat - boston_tract_location$center_of_geo[i, 2])^2 + (boston_station_location$lon - boston_tract_location$center_of_geo[i, 1])^2)
-  
+  boston_station_location$distance <-
+    sqrt((boston_station_location$lat -
+      boston_tract_location$center_of_geo[i, 2])^2 +
+      (boston_station_location$lon -
+        boston_tract_location$center_of_geo[i, 1])^2)
+
   # put the station name that has the shortest distance in the tract dataframe
-  boston_tract_location$nearest_station[i] <- boston_station_location$station_name[boston_station_location$distance == min(boston_station_location$distance)]
+  boston_tract_location$nearest_station[i] <-
+    boston_station_location$station_name[
+      boston_station_location$distance == min(boston_station_location$distance)
+    ]
 }
 
-boston_station_location <- boston_station_location %>% 
-  select(-c('distance'))
+boston_station_location <- boston_station_location %>%
+  select(-c("distance"))
 ```
 
+
+## Nearest Station Plotting
 ```{r}
-# This was more so for checking we assigned the correct stations, so it doesn't need to be included in the final report - Sherry
+# This was more so for checking we assigned the correct stations,
+# so it doesn't need to be included in the final report - Sherry
 
 census_stations <- ggplot() +
-  geom_sf(data = boston_tract_location, aes(fill = nearest_station), color = 'black') +
+  geom_sf(data = boston_tract_location, aes(
+    fill = nearest_station
+  ), color = "black") +
   theme_void() +
   theme(
     legend.text = element_text(size = 4)
-  )+
+  ) +
   geom_point(data = stations, aes(x = lon, y = lat))
 
 census_stations
@@ -288,7 +329,6 @@ census_stations
 
 ## Normalize entries for population
 ```{r}
-
 station16 <- read.csv("GSE_by_year/GSE_2016.csv")
 
 # Aggregate the data by station and calculate the sum of entries for 2016
@@ -296,7 +336,7 @@ station_sum16 <- station16 %>%
   group_by(station_name) %>%
   summarise(total_entries = sum(gated_entries))
 
-station16 <- left_join(station_sum16, tstops, by=c("station_name"="name"))
+station16 <- left_join(station_sum16, tstops, by = c("station_name" = "name"))
 
 station22 <- read.csv("GSE_by_year/GSE_2022.csv")
 
@@ -305,29 +345,57 @@ station_sum22 <- station22 %>%
   group_by(station_name) %>%
   summarise(total_entries = sum(gated_entries))
 
-station22 <- left_join(station_sum22, tstops, by=c("station_name"="name"))
+station22 <- left_join(station_sum22, tstops, by = c("station_name" = "name"))
 
 
 # Find population for 2016
-tract_station_population16 <- st_join(boston_tract_location, filter(boston_race_16, variable == "Hispanic"))
-tract_station_population16 <- group_by(tract_station_population16, nearest_station)
-norm_station_populations16 <- summarise(tract_station_population16, population = sum(summary_est))
+tract_station_population16 <-
+  st_join(boston_tract_location, filter(boston_race_16, variable == "Hispanic"))
+tract_station_population16 <-
+  group_by(tract_station_population16, nearest_station)
+norm_station_populations16 <-
+  summarise(tract_station_population16, population = sum(summary_est))
 
-#Convert 2016 stations to not have geometry
-norm_station_populations16 <- sf_to_df(norm_station_populations16, fill = TRUE, unlist = NULL)
+# Convert 2016 stations to not have geometry
+norm_station_populations16 <-
+  sf_to_df(norm_station_populations16, fill = TRUE, unlist = NULL)
 
-#join populations and station entries to have both and remove NAs
-norm_station_populations16 <- left_join(station16, norm_station_populations16, by=c("station_name"="nearest_station"))
+# join populations and station entries to have both and remove NAs
+norm_station_populations16 <-
+  left_join(station16, norm_station_populations16,
+    by = c("station_name" = "nearest_station")
+  )
 norm_station_populations16 <- norm_station_populations16 %>%
   group_by(station_name) %>%
-  summarise(total_entries = mean(total_entries), population = mean(population), lon = mean(lon), lat = mean(lat))
+  summarise(
+    total_entries =
+      mean(total_entries), population = mean(population),
+    lon = mean(lon), lat = mean(lat)
+  )
 # REMOVE NAS HERE
+
 
 station_populations16 <- left_join(station_populations16, station16, by=c("nearest_station" = "station_name"))
 
-#normalize data
-norm_station_populations16$norm_entries <- norm_station_populations16$total_entries / norm_station_populations16$population
+# normalize data
+norm_station_populations16$norm_entries <-
+  norm_station_populations16$total_entries /
+    norm_station_populations16$population
+```
 
+
+```{r}
+# Find population for 2022
+tract_station_population22 <- st_join(
+  boston_tract_location, filter(boston_race_22, variable == "Hispanic")
+)
+tract_station_population22 <- group_by(
+  tract_station_population22, nearest_station
+)
+norm_station_populations22 <- summarise(
+  tract_station_population22,
+  population = sum(summary_est)
+)
 
 #Find population for 2022
 tract_station_population22 <- st_join(boston_tract_location, filter(boston_race_22, variable == "Hispanic"))
@@ -339,13 +407,31 @@ norm_station_populations22 <- sf_to_df(norm_station_populations22, fill = TRUE, 
 
 #join populations and station entries to have both and remove NAs
 norm_station_populations22 <- left_join(station22, norm_station_populations22, by=c("station_name"="nearest_station"))
+
+# Convert 2016 stations to not have geometry
+norm_station_populations22 <- sf_to_df(
+  norm_station_populations22,
+  fill = TRUE, unlist = NULL
+)
+
+# join populations and station entries to have both and remove NAs
+norm_station_populations22 <- left_join(
+  station22, norm_station_populations22,
+  by = c("station_name" = "nearest_station")
+)
+
 norm_station_populations22 <- norm_station_populations22 %>%
   group_by(station_name) %>%
-  summarise(total_entries = mean(total_entries), population = mean(population), lon = mean(lon), lat = mean(lat))
+  summarise(
+    total_entries = mean(total_entries),
+    population = mean(population), lon = mean(lon), lat = mean(lat)
+  )
 # REMOVE NAS HERE
 
-#normalize data
-norm_station_populations22$norm_entries <- norm_station_populations22$total_entries / norm_station_populations22$population
+# normalize data
+norm_station_populations22$norm_entries <-
+  norm_station_populations22$total_entries /
+    norm_station_populations22$population
 ```
 
 ## Make linear regression models
@@ -353,37 +439,67 @@ norm_station_populations22$norm_entries <- norm_station_populations22$total_entr
 ```{r}
 # Join normalized entries with racial data
 # for 2016
-station_races16<-left_join(norm_station_populations16,boston_tract_location, by = c("station_name"="nearest_station"))
-station_race16 <- left_join(select(station_races16,-c("variable", "estimate","moe")), boston_race_16) %>% mutate(percent = 100 * (estimate / summary_est))
+station_races16 <- left_join(
+  norm_station_populations16, boston_tract_location,
+  by = c("station_name" = "nearest_station")
+)
+station_race16 <- left_join(
+  select(station_races16, -c("variable", "estimate", "moe")), boston_race_16
+) %>% mutate(percent = 100 * (estimate / summary_est))
 station_race16$race <- station_race16$variable
 
 # for 2022
-station_races22<-left_join(norm_station_populations22,boston_tract_location, by = c("station_name"="nearest_station"))
-station_race22 <- left_join(select(station_races22,-c("variable", "estimate","moe")), select(boston_race_22, c("GEOID","variable","estimate","summary_est", "moe")), by=c("GEOID"="GEOID")) %>% mutate(percent = 100 * (estimate / summary_est))
+station_races22 <- left_join(
+  norm_station_populations22, boston_tract_location,
+  by = c("station_name" = "nearest_station")
+)
+station_race22 <- left_join(
+  select(station_races22, -c("variable", "estimate", "moe")),
+  select(boston_race_22, c(
+    "GEOID", "variable", "estimate", "summary_est", "moe"
+  )),
+  by = c("GEOID" = "GEOID")
+) %>% mutate(percent = 100 * (estimate / summary_est))
 station_race22$race <- station_race22$variable
 
 
 # Join normalized entries with income data
 # for 2016
-station_race16 <- left_join(select(station_race16,-c("variable", "estimate","moe")), boston_income_16)
+station_race16 <- left_join(
+  select(station_race16, -c("variable", "estimate", "moe")), boston_income_16
+)
 station_race16$income <- station_race16$estimate
-station_race16 <- select(station_race16, c("norm_entries","station_name","percent","income","race"))
+station_race16 <- select(
+  station_race16, c("norm_entries", "station_name", "percent", "income", "race")
+)
 
 # for 2022
-station_race22 <- left_join(select(station_race22,-c("variable", "estimate","moe")), select(boston_income_22, c("GEOID","estimate")))
+station_race22 <- left_join(
+  select(
+    station_race22, -c("variable", "estimate", "moe")
+  ), select(boston_income_22, c("GEOID", "estimate"))
+)
 station_race22$income <- station_race22$estimate
-station_race22 <- select(station_race22, c("norm_entries","station_name","percent","income","race"))
+station_race22 <- select(
+  station_race22, c("norm_entries", "station_name", "percent", "income", "race")
+)
 
 # Remove NA and hispanic race because we don't have enough data for that
-station_race16 <- filter(station_race16, race !="Hispanic")
-station_race22 <- filter(station_race22, race !="Hispanic")
+station_race16 <- filter(station_race16, race != "Hispanic")
+station_race22 <- filter(station_race22, race != "Hispanic")
 
 # Plot
-plot2016 <- ggplot(station_race16, aes(x=percent, y=norm_entries,color=race)) +
+plot2016 <- ggplot(
+  station_race16,
+  aes(x = percent, y = norm_entries, color = race)
+) +
   geom_point() +
   facet_wrap(~race)
 
-plot2022 <- ggplot(station_race22, aes(x=percent, y=norm_entries,color=race)) +
+plot2022 <- ggplot(
+  station_race22,
+  aes(x = percent, y = norm_entries, color = race)
+) +
   geom_point() +
   facet_wrap(~race)
 
@@ -397,13 +513,14 @@ norm_station_entry_22 <- ggplot() +
   theme_void() +
   theme(
     legend.text = element_text(size = 4)
-  )+ 
-  geom_point(data = station_populations22, 
-   aes(x = lon, y = lat, size = norm_entries), 
-   color = "black",
-   fill = "blue",
-   shape = 21
-   )+
+  ) +
+  geom_point(
+    data = norm_station_populations22,
+    aes(x = lon, y = lat, size = norm_entries),
+    color = "black",
+    fill = "blue",
+    shape = 21
+  ) +
   ggtitle("Normalized Lightrail Station Entry 2022")
 
 norm_station_entry_22
@@ -415,39 +532,96 @@ norm_station_entry_16 <- ggplot() +
   theme_void() +
   theme(
     legend.text = element_text(size = 4)
-  )+ 
-  geom_point(data = station_populations16, 
-   aes(x = lon, y = lat, size = norm_entries), 
-   color = "black",
-   fill = "blue",
-   shape = 21
-   )+
+  ) +
+  geom_point(
+    data = norm_station_populations16,
+    aes(x = lon, y = lat, size = norm_entries),
+    color = "black",
+    fill = "blue",
+    shape = 21
+  ) +
   ggtitle("Normalized Lightrail Station Entry 2016")
 
 norm_station_entry_16
 ```
+## Regression on Gated Entry vs income
+```{r}
+coord <- boston_income_16$geometry[[1]][[1]][[1]][1,]
+
+lon <- coord[[1]]
+lat <- coord[[2]]
+lat
+```
+```{r}
+# Extract longitude and latitude from boston_income_16 dataset
+boston_income_16 <- boston_income_16 %>%
+  mutate(lon = geometry[[1]][[1]][[1]][1,][[1]],
+         lat = geometry[[1]][[1]][[1]][1,][[2]])
+         
+boston_income_16
+```
+```{r}
+
+# Round the longitude and latitude to 3 decimal points
+boston_income_16$lon <- round(boston_income_16$lon, 3)
+boston_income_16$lat <- round(boston_income_16$lat, 3)
+
+# Round longitude and latitude in norm_station_populations16 to 3 decimal points
+norm_station_populations16$lon <- round(norm_station_populations16$lon, 3)
+norm_station_populations16$lat <- round(norm_station_populations16$lat, 3)
+
+# Merge datasets based on rounded longitude and latitude
+merged_data <- merge(boston_income_16, norm_station_populations16, by = c("lon", "lat"), all = TRUE)
+
+# View the merged dataset
+print(merged_data)
+
+```
 
 ```{r}
-station_populations22$diff_norm_entry <- station_populations22$norm_entries - station_populations16$norm_entries
+# Merge datasets based on common geographical identifier (if available)
+merged_data <- merge(boston_income_16, norm_station_populations16, by.x = "GEOID", by.y = "station_name", all = TRUE)
 
+# Data cleaning and preprocessing (if needed)
+
+# Check for missing values
+sum(is.na(merged_data))
+
+# If there are missing values, handle them appropriately (e.g., imputation)
+
+# Fit a regression model
+model <- lm(estimate ~ total_entries, data = merged_data)
+
+# Summary of the regression model
+summary(model)
+
+# Assess the model's goodness of fit
+# You can use metrics like R-squared, Adjusted R-squared, residuals analysis, etc.
+
+# Predictions (if needed)
+# predicted_values <- predict(model, newdata = test_data)
+
+# Interpret the results
+
+
+```
+
+```{r}
+station_populations_16_22 <- norm_station_populations22
+station_populations_16_22$diff_norm_entry <- norm_station_populations22$norm_entries - norm_station_populations16$norm_entries
 diff_norm_station_entry <- ggplot() +
   geom_sf(data = boston_tract_location, color = NA, fill = "gray") +
   theme_void() +
   theme(
     legend.text = element_text(size = 4)
-  )+ 
-  geom_point(data = station_populations22, 
-   aes(x = lon, y = lat, fill = diff_norm_entry), 
-   color = "black",
-   shape = 21
-   )+
-  ggtitle("Difference in Light Rail Usage from 2016 - 2022")+ 
-  geom_point(data = station_populations22, 
-   aes(x = lon, y = lat, fill = diff_norm_entry), 
-   color = "black",
-   shape = 21,
-   size = 3
-   )+
+  ) +
+  geom_point(
+    data = station_populations_16_22,
+    aes(x = lon, y = lat, fill = diff_norm_entry),
+    color = "black",
+    shape = 21
+  ) +
+  ggtitle("Difference in Light Rail Usage from 2016 - 2022") +
   scale_fill_gradient(low = "red", high = "yellow", na.value = NA)
 
 diff_norm_station_entry
