@@ -19,7 +19,7 @@ library(pacman)
 pacman::p_load(
   "forcats", "dplyr", "readr", "ggplot2", "sfheaders",
   "geojsonsf", "sf", "purrr", "ggmap", "ggthemes",
-  "tidycensus", "scales", "patchwork", "tidyverse",
+  "tidycensus", "scales", "patchwork", "tidyverse"
 )
 ```
 
