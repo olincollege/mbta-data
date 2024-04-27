@@ -576,14 +576,19 @@ ggplot()+geom_point(aes(station_race16$race,station_race16$norm_entries))+
 
 
 ```{r}
-station_populations_16_22 <- norm_station_populations22
-station_populations_16_22$diff_norm_entry <- norm_station_populations22$norm_entries - norm_station_populations16$norm_entries
+station_populations_16_22 <- norm_station_populations22 %>% 
+  filter(!is.na(norm_entries))
+
+for (i in 1:length(station_populations_16_22$station_name)){
+  norm_entry_16 <- norm_station_populations16$norm_entries[norm_station_populations16$station_name == station_populations_16_22$station_name[i]]
+  norm_entry_22 <- station_populations_16_22$norm_entries
+  station_populations_16_22$diff_norm_entry[i] <- (norm_entry_22 - norm_entry_16) / norm_entry_16 * 100
+}
+  
+
 diff_norm_station_entry <- ggplot() +
   geom_sf(data = boston_tract_location, color = NA, fill = "gray") +
   theme_void() +
-  theme(
-    legend.text = element_text(size = 4)
-  ) +
   geom_point(
     data = station_populations_16_22,
     aes(x = lon, y = lat, fill = diff_norm_entry),
@@ -591,7 +596,7 @@ diff_norm_station_entry <- ggplot() +
     shape = 21
   ) +
   ggtitle("Difference in Light Rail Usage from 2016 - 2022") +
-  scale_fill_gradient(low = "red", high = "yellow", na.value = NA)
+  scale_fill_gradient2(low = "red", mid = "yellow", high = "green", midpoint = 200, na.value = NA, name = "Percentage of Rider Increase in 2022")
 
 diff_norm_station_entry
 ```

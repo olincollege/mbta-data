@@ -1,19 +1,5 @@
-# mbta-data
+# MBTA Data
 
-## Noah
-Learn more about public transportation in Boston.
-
-## Sherry
-Learn more about this country's ever-collapsing public transportation system
-
-## Sally
-I hope to learn to create informative and visually appealing plots, charts, and maps to represent the MBTA data.
-
-
-## Camille
-
-I hope to learn more about the data set we are looking at and get more confident creating visualizations that are useful for analysis.
-
-## Becca
-I like trains
-
+## Data Sources
+[Station Location Data](https://github.com/singingwolfboy/MBTA-GeoJSON)
+[Station Entry Data](https://mbta-massdot.opendata.arcgis.com/datasets/7859894afb5641ce91a2bb03599fdf5b/about)
