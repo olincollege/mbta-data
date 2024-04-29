@@ -28,7 +28,7 @@ API Keys: DO NOT COMMIT
 # stadiamap
 
 register_stadiamaps("YOUR_API_KEY_HERE", write = TRUE)
-census_api_key("YOUR_API_KEY_HERE", install = TRUE)
+census_api_key("bd9d9d7b7852d68a808c2fab5412f7b4a5ef5074")
 
 ```
 
@@ -82,6 +82,10 @@ boston_income_22 <- get_acs(
 bi_1 <- boston_income_16 %>%
   ggplot(aes(fill = estimate)) +
   geom_sf(color = NA) +
+  geom_point(
+    data = station_populations_16_22,
+    aes(x = lon, y = lat, fill = diff_norm_entry),
+    color = "blue")+
   theme_void() +
   scale_fill_viridis_c(
     option = "inferno",
@@ -97,6 +101,10 @@ bi_1 <- boston_income_16 %>%
 bi_2 <- boston_income_22 %>%
   ggplot(aes(fill = estimate)) +
   geom_sf(color = NA) +
+  geom_point(
+    data = station_populations_16_22,
+    aes(x = lon, y = lat, fill = diff_norm_entry),
+    color = "blue")+
   theme_void() +
   scale_fill_viridis_c(
     option = "inferno",
@@ -113,7 +121,7 @@ bi_1 + bi_2
 racevars <- c(White = "B02001_002", 
               Black = "B02001_003", 
               Asian = "B02001_005",
-              `Two or more` = "B02001_008")
+              `Two or more` = "B02001_008" )
 
 
 boston_race_16 <- get_acs(
@@ -161,6 +169,33 @@ br_2 <- boston_race_22 %>%
 
 br_1 + br_2
 ```
+```{r}
+racevars <- c(Black = "B02001_003")
+
+boston_race_22 <- get_acs(
+  geography = "cbg",
+  variables = racevars,
+  state = "MA",
+  county = "Suffolk",
+  geometry = TRUE,
+  summary_var = "B02001_001",
+  year = 2022,
+)
+
+boston_race_22 %>%
+  mutate(percent = 100 * (estimate / summary_est)) %>%
+  ggplot(aes(fill = percent)) +
+  facet_wrap(~variable) +
+  geom_sf(color = NA) +
+   geom_point(
+    data = station_populations_16_22,
+    aes(x = lon, y = lat, fill = diff_norm_entry),
+    color = "red")+
+  theme_void() +
+  scale_fill_viridis_c() +
+  labs(fill = "% of population", subtitle = "2022 census", title = "Red Line station locations")
+
+```
 
 ```{r, "MBTA usage"}
 transvars <- c(
@@ -194,11 +229,14 @@ bt_1 <- boston_transport_16 %>%
   mutate(percent = 100 * (estimate / summary_est)) %>%
   ggplot(aes(fill = percent)) +
   geom_sf(color = NA) +
+  geom_point(
+    data = station_populations_16_22,
+    aes(x = lon, y = lat, fill = diff_norm_entry),
+    color = "red")+
   theme_void() +
   scale_fill_viridis_c(option = "turbo", limits = c(0, 100)) +
   labs(
-    title = "Percentage of Population \n
-      that uses the Lightrail/Subway",
+    title = "Percentage of Population \nthat uses the Lightrail/Subway",
     subtitle = "2016 census"
   ) +
   theme(legend.position = "None")
@@ -209,6 +247,10 @@ bt_2 <- boston_transport_22 %>%
   mutate(percent = 100 * (estimate / summary_est)) %>%
   ggplot(aes(fill = percent)) +
   geom_sf(color = NA) +
+  geom_point(
+    data = station_populations_16_22,
+    aes(x = lon, y = lat, fill = diff_norm_entry),
+    color = "red")+
   theme_void() +
   scale_fill_viridis_c(option = "turbo", limits = c(0, 100)) +
   labs(fill = "% of population", subtitle = "2022 census")
@@ -527,6 +569,21 @@ norm_station_entry_16 <- ggplot() +
 norm_station_entry_16
 ```
 ## Regression on Gated Entry vs income
+
+```{r}
+lm_entry_income <- lm(norm_entries ~ income, data = station_race16)
+summary(lm_entry_income)
+```
+```{r}
+plot(station_race16$income,station_race16$norm_entries,
+     xlab = 'median income',
+     ylab = 'normalized gated entries',
+     main = 'Scatter Plot of the normalized gated entries vs median income'
+     )
+
+```
+
+
 ```{r}
 coord <- boston_income_16$geometry[[1]][[1]][[1]][1,]
 
@@ -589,9 +646,8 @@ summary(model)
 ```
 
 ```{r}
-station_populations22 <-
-  norm_station_populations22$norm_entries - norm_station_populations16$norm_entries
-boston_tract_location = as.data.frame(boston_tract_location)
+station_populations_16_22 <- norm_station_populations22
+station_populations_16_22$diff_norm_entry <- norm_station_populations22$norm_entries - norm_station_populations16$norm_entries
 diff_norm_station_entry <- ggplot() +
   geom_sf(data = boston_tract_location, color = NA, fill = "gray") +
   theme_void() +
@@ -599,19 +655,12 @@ diff_norm_station_entry <- ggplot() +
     legend.text = element_text(size = 4)
   ) +
   geom_point(
-    data = station_populations22,
+    data = station_populations_16_22,
     aes(x = lon, y = lat, fill = diff_norm_entry),
     color = "black",
     shape = 21
   ) +
   ggtitle("Difference in Light Rail Usage from 2016 - 2022") +
-  geom_point(
-    data = station_populations22,
-    aes(x = lon, y = lat, fill = diff_norm_entry),
-    color = "black",
-    shape = 21,
-    size = 3
-  ) +
   scale_fill_gradient(low = "red", high = "yellow", na.value = NA)
 
 diff_norm_station_entry
