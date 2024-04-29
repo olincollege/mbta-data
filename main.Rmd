@@ -16,6 +16,8 @@ if (!"pacman" %in% installed.packages()) {
 }
 # load pacman
 library(pacman)
+
+# Use pacman to install and load libraries
 pacman::p_load(
   "forcats", "dplyr", "readr", "ggplot2", "sfheaders",
   "geojsonsf", "sf", "purrr", "ggmap", "ggthemes",
@@ -25,10 +27,9 @@ pacman::p_load(
 
 API Keys: DO NOT COMMIT
 ```{r}
-# stadiamap
-
-register_stadiamaps("YOUR_API_KEY_HERE", write = TRUE)
-census_api_key("YOUR_API_KEY_HERE")
+# 
+# register_stadiamaps("YOUR_API_KEY_HERE", write = TRUE)
+# census_api_key("YOUR_API_KEY_HERE", install = TRUE)
 
 ```
 
@@ -81,19 +82,108 @@ ggmap(mymap) + # creates the map "background"
 ```
 
 
-## Plot correlations
-```{r}
+## Race Distribution Visualization in Suffolk County
 
+```{r, "race facet plots"}
+
+# these are the codes that are needed to call from the census data
+
+racevars <- c(White = "B02001_002", 
+              Black = "B02001_003", 
+              Asian = "B02001_005",
+              `Two or more` = "B02001_008" )
+
+# getting the 5-year census data relevant to Suffolk county and the population
+# data about black, white, asian, and multi-racial people in
+# this county in 2016 and 2022
+
+boston_race_16 <- get_acs(
+  geography = "cbg",
+  variables = racevars,
+  state = "MA",
+  county = "Suffolk",
+  geometry = TRUE,
+  summary_var = "B02001_001",
+  year = 2016,
+)
+boston_race_22 <- get_acs(
+  geography = "cbg",
+  variables = racevars,
+  state = "MA",
+  county = "Suffolk",
+  geometry = TRUE,
+  summary_var = "B02001_001",
+  year = 2022,
+)
+
+
+# plotting the percent of the population that is each race in suffolk county in 2022
+# and 2016 in the style of a choropleth map with the station locations layed overtop
+
+br_1 <- boston_race_16 %>%
+  mutate(percent = 100 * (estimate / summary_est)) %>%
+  ggplot(aes(fill = percent)) +
+  facet_wrap(~variable) +
+  geom_sf(color = NA) +
+  theme_void() +
+  scale_fill_viridis_c() +
+  labs(
+    title = "Demographics of the Suffolk County",
+    subtitle = "2016 census"
+  ) +
+  theme(legend.position = "None")
+
+br_2 <- boston_race_22 %>%
+  mutate(percent = 100 * (estimate / summary_est)) %>%
+  ggplot(aes(fill = percent)) +
+  facet_wrap(~variable) +
+  geom_sf(color = NA) +
+  theme_void() +
+  scale_fill_viridis_c() +
+  labs(fill = "% of population", subtitle = "2022 census") +
+  theme(legend.position = "bottom")
+
+#plotting the two years side by side using patchwork
+br_1 + br_2
+```
+
+# Load Census Data on Income
+```{r}
+options(tigris_use_cache = TRUE)
+
+# getting the 5-year census data relevant to Suffolk county and the 
+#median income of each block group in
+# this county in 2016 and 2022
+
+boston_income_16 <- get_acs(
+  state = "MA",
+  county = "Suffolk",
+  geography = "cbg",
+  variables = "B19013_001",
+  geometry = TRUE,
+  year = 2016
+)
+
+boston_income_22 <- get_acs(
+  state = "MA",
+  county = "Suffolk",
+  geography = "cbg",
+  variables = "B19013_001",
+  geometry = TRUE,
+  year = 2022
+)
 ```
 
 
-## Other
+## Census Block mapping 
 ```{r}
+# these are the codes that are needed to call from the census data
+transvars <- c(
+  Subway = "B08301_013",
+  Lightrail = "B08301_012"
+)
 
-```
-
-## Census Tract mapping 
-```{r}
+# pull Suffolk county's census information (in blocks) through the census API
 boston_tract_location <- get_acs(
   state = "MA",
   county = "Suffolk",
@@ -103,6 +193,7 @@ boston_tract_location <- get_acs(
   year = 2016,
 )
 
+# filter so we only have the light rail data
 boston_tract_location <- filter(
   boston_tract_location,
   variable == "Subway"
@@ -111,12 +202,11 @@ boston_tract_location <- filter(
 
 
 ```{r}
-# find the "center point" of all the tract polygons
+# find the "center point" of all the block border polygons
 boston_tract_location$center_of_geo <-
   st_coordinates(sf::st_centroid(x = boston_tract_location$geometry))
-```
 
-```{r}
+# filter out stations that don't have a location on file
 boston_station_location <- stations %>%
   filter(is.na(lat) == FALSE)
 ```
@@ -124,16 +214,16 @@ boston_station_location <- stations %>%
 ```{r}
 boston_tract_location$nearest_station <- ""
 
-# for every tract in the census
+# for every block in the census
 for (i in 1:length(boston_tract_location$NAME)) {
-  # find distance between all station and the tract
+  # find distance between all station and the block we're looping through
   boston_station_location$distance <-
     sqrt((boston_station_location$lat -
       boston_tract_location$center_of_geo[i, 2])^2 +
       (boston_station_location$lon -
         boston_tract_location$center_of_geo[i, 1])^2)
 
-  # put the station name that has the shortest distance in the tract dataframe
+  # put the station name that has the shortest distance in the block dataframe
   boston_tract_location$nearest_station[i] <-
     boston_station_location$station_name[
       boston_station_location$distance == min(boston_station_location$distance)
@@ -147,8 +237,8 @@ boston_station_location <- boston_station_location %>%
 
 ## Nearest Station Plotting
 ```{r}
-# This was more so for checking we assigned the correct stations,
-# so it doesn't need to be included in the final report - Sherry
+# Plots out which blocks are assigned to which station, more so just a graphical representation
+# to check if our block mapping was correct
 
 census_stations <- ggplot() +
   geom_sf(data = boston_tract_location, aes(
@@ -164,10 +254,9 @@ census_stations
 ```
 
 
-
-
 ## Normalize entries for population
 ```{r}
+# Get total entries for 2016
 station16 <- read.csv("GSE_by_year/GSE_2016.csv")
 
 # Aggregate the data by station and calculate the sum of entries for 2016
@@ -175,8 +264,10 @@ station_sum16 <- station16 %>%
   group_by(station_name) %>%
   summarise(total_entries = sum(gated_entries))
 
+# join with stops
 station16 <- left_join(station_sum16, tstops, by = c("station_name" = "name"))
 
+# Get total entries for 2022
 station22 <- read.csv("GSE_by_year/GSE_2022.csv")
 
 # Aggregate the data by station and calculate the sum of entries for 2022
@@ -184,6 +275,7 @@ station_sum22 <- station22 %>%
   group_by(station_name) %>%
   summarise(total_entries = sum(gated_entries))
 
+#join with stops
 station22 <- left_join(station_sum22, tstops, by = c("station_name" = "name"))
 
 
@@ -211,7 +303,6 @@ norm_station_populations16 <- norm_station_populations16 %>%
       mean(total_entries), population = mean(population),
     lon = mean(lon), lat = mean(lat)
   )
-# REMOVE NAS HERE
 
 # normalize data
 norm_station_populations16$norm_entries <-
@@ -249,7 +340,6 @@ norm_station_populations22 <- norm_station_populations22 %>%
     total_entries = mean(total_entries),
     population = mean(population), lon = mean(lon), lat = mean(lat)
   )
-# REMOVE NAS HERE
 
 # normalize data
 norm_station_populations22$norm_entries <-
@@ -310,27 +400,12 @@ station_race22 <- select(
 # Remove NA and hispanic race because we don't have enough data for that
 station_race16 <- filter(station_race16, race != "Hispanic")
 station_race22 <- filter(station_race22, race != "Hispanic")
-
-# Plot
-plot2016 <- ggplot(
-  station_race16,
-  aes(x = percent, y = norm_entries, color = race)
-) +
-  geom_point() +
-  facet_wrap(~race)
-
-plot2022 <- ggplot(
-  station_race22,
-  aes(x = percent, y = norm_entries, color = race)
-) +
-  geom_point() +
-  facet_wrap(~race)
-
-plot2016 + plot2022
 ```
 
+# Plot Normalized Light Rail Entry
 
 ```{r}
+# Plot Normalized Light Rail Station Entry in 2022
 norm_station_entry_22 <- ggplot() +
   geom_sf(data = boston_tract_location, color = NA, fill = "gray") +
   theme_void() +
@@ -351,6 +426,7 @@ norm_station_entry_22
 ```
 
 ```{r}
+# Plot Normalized Light Rail Station Entry in 2016
 norm_station_entry_16 <- ggplot() +
   geom_sf(data = boston_tract_location, color = NA, fill = "gray") +
   theme_void() +
@@ -375,6 +451,7 @@ norm_station_entry_16
 lm_entry_income <- lm(norm_entries ~ income, data = station_race16)
 summary(lm_entry_income)
 ```
+
 ```{r}
 ggplot()+geom_point(aes(station_race16$income,station_race16$norm_entries))+
   geom_line(aes(station_race16$income, predict(lm_entry_income, newdata = station_race16)))+
@@ -410,7 +487,6 @@ filtered_data <- subset(filtered_data, race == "Black")
 lm_entry_income_filtered <- lm(norm_entries ~ percent, data = station_race16)
 summary(lm_entry_income_filtered)
 
-library(ggplot2)
 # Plotting
 ggplot(filtered_data) +
   geom_point(aes(percent, norm_entries)) +
@@ -419,12 +495,10 @@ ggplot(filtered_data) +
   xlab('How White')+
   ylab('filtered normalized gated entries')
 ```
+
 ```{r}
 lm_entry_income <- lm(norm_entries ~ race, data = station_race16)
 summary(lm_entry_income)
-```
-```{r}
-
 ```
 
 ```{r}
@@ -491,28 +565,11 @@ ggplot(station_populations_16_22) +
   ylab("difference in usage between 2016 and 2022")+ 
   scale_fill_gradientn(colours = c("red", "yellow", "green"), values = c(0, 0.9875, 1), na.value = NA, name = "# of extra Rider Increase in 2022")
 ```
+
+
 ```{r, "median income"}
-options(tigris_use_cache = TRUE)
-
-
-boston_income_16 <- get_acs(
-  state = "MA",
-  county = "Suffolk",
-  geography = "cbg",
-  variables = "B19013_001",
-  geometry = TRUE,
-  year = 2016
-)
-
-boston_income_22 <- get_acs(
-  state = "MA",
-  county = "Suffolk",
-  geography = "cbg",
-  variables = "B19013_001",
-  geometry = TRUE,
-  year = 2022
-)
-
+# plotting the median income in suffolk county in 2022 and 2016
+# in the style of a choropleth map with the station locations layed overtop
 bi_1 <- boston_income_16 %>%
   ggplot(aes(fill = estimate)) +
   geom_sf(color = NA) +
@@ -548,64 +605,18 @@ bi_2 <- boston_income_22 %>%
   labs(fill = "Median Household income", subtitle = "2022 census") +
   theme(legend.position = "right")
 
+#plotting the two years side by side using patchwork
 bi_1 + bi_2
 ```
-```{r, "race facet plots"}
-
-racevars <- c(White = "B02001_002", 
-              Black = "B02001_003", 
-              Asian = "B02001_005",
-              `Two or more` = "B02001_008" )
 
 
-boston_race_16 <- get_acs(
-  geography = "cbg",
-  variables = racevars,
-  state = "MA",
-  county = "Suffolk",
-  geometry = TRUE,
-  summary_var = "B02001_001",
-  year = 2016,
-)
-boston_race_22 <- get_acs(
-  geography = "cbg",
-  variables = racevars,
-  state = "MA",
-  county = "Suffolk",
-  geometry = TRUE,
-  summary_var = "B02001_001",
-  year = 2022,
-)
-
-
-br_1 <- boston_race_16 %>%
-  mutate(percent = 100 * (estimate / summary_est)) %>%
-  ggplot(aes(fill = percent)) +
-  facet_wrap(~variable) +
-  geom_sf(color = NA) +
-  theme_void() +
-  scale_fill_viridis_c() +
-  labs(
-    title = "Demographics of the Suffolk County",
-    subtitle = "2016 census"
-  ) +
-  theme(legend.position = "None")
-
-br_2 <- boston_race_22 %>%
-  mutate(percent = 100 * (estimate / summary_est)) %>%
-  ggplot(aes(fill = percent)) +
-  facet_wrap(~variable) +
-  geom_sf(color = NA) +
-  theme_void() +
-  scale_fill_viridis_c() +
-  labs(fill = "% of population", subtitle = "2022 census") +
-  theme(legend.position = "bottom")
-
-br_1 + br_2
-```
 ```{r}
+# this is the code needed to call from the census data
 racevars <- c(Black = "B02001_003")
 
+# getting the 5-year census data relevant to Suffolk county and the population
+# data about black people in this county in 2022
+
 boston_race_22 <- get_acs(
   geography = "cbg",
   variables = racevars,
@@ -615,6 +626,9 @@ boston_race_22 <- get_acs(
   summary_var = "B02001_001",
   year = 2022,
 )
+
+# plotting the percent of the population that is black in suffolk county in 2022
+# in the style of a choropleth map with the station locations layed overtop
 
 boston_race_22 %>%
   mutate(percent = 100 * (estimate / summary_est)) %>%
@@ -631,12 +645,10 @@ boston_race_22 %>%
 
 ```
 
-```{r, "MBTA usage"}
-transvars <- c(
-  Subway = "B08301_013",
-  Lightrail = "B08301_012"
-)
 
+```{r, "MBTA usage"}
+# getting the 5-year census data relevant to Suffolk county and if people use
+# the light rail and subway to get to work in 2016
 boston_transport_16 <- get_acs(
   state = "MA",
   county = "Suffolk",
@@ -647,6 +659,9 @@ boston_transport_16 <- get_acs(
   year = 2016,
 )
 
+
+# getting the 5-year census data relevant to Suffolk county and if people use
+# the light rail and subway to get to work in 2022
 boston_transport_22 <- get_acs(
   state = "MA",
   county = "Suffolk",
@@ -656,6 +671,11 @@ boston_transport_22 <- get_acs(
   summary_var = "B08301_001",
   year = 2022,
 )
+
+
+#plotting the percent of population that uses the light rail/ subway to get to work
+# on a choropleth map. Also plotting the station locations of the red line on top
+# for both 2016 and 2022
 
 bt_1 <- boston_transport_16 %>%
   group_by(GEOID) %>%
@@ -689,11 +709,10 @@ bt_2 <- boston_transport_22 %>%
   scale_fill_viridis_c(option = "turbo", limits = c(0, 100)) +
   labs(fill = "% of population", subtitle = "2022 census")
 
+#plotting the two years side by side using patchwork
+
 bt_1 + bt_2
 ```
-
-
-
 
 
 
