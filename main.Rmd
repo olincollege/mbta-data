@@ -28,8 +28,7 @@ pacman::p_load(
 API Keys: DO NOT COMMIT
 ```{r}
 # 
-# register_stadiamaps("YOUR_API_KEY_HERE", write = TRUE)
-# census_api_key("YOUR_API_KEY_HERE", install = TRUE)
+
 
 ```
 
@@ -281,7 +280,7 @@ station22 <- left_join(station_sum22, tstops, by = c("station_name" = "name"))
 
 # Find population for 2016
 tract_station_population16 <-
-  st_join(boston_tract_location, filter(boston_race_16, variable == "Hispanic"))
+  st_join(boston_tract_location, boston_race_16)
 tract_station_population16 <-
   group_by(tract_station_population16, nearest_station)
 norm_station_populations16 <-
@@ -313,7 +312,7 @@ norm_station_populations16$norm_entries <-
 ```{r}
 # Find population for 2022
 tract_station_population22 <- st_join(
-  boston_tract_location, filter(boston_race_22, variable == "Hispanic")
+  boston_tract_location, boston_race_22
 )
 tract_station_population22 <- group_by(
   tract_station_population22, nearest_station
@@ -466,48 +465,54 @@ filtered_data <- subset(station_race16, norm_entries < 125)
 # Filter data for income more than 125000 (too less data points)
 filtered_data <- subset(filtered_data, income < 125000)
 
-lm_entry_income_filtered <- lm(norm_entries ~ income, data = station_race16)
+lm_entry_income_filtered <- lm(norm_entries ~ 1 + income, data = filtered_data)
 summary(lm_entry_income_filtered)
 
 # Plotting
 ggplot(filtered_data) +
-  geom_point(aes(income, norm_entries)) +
+  geom_point(aes(x=income, y=norm_entries)) +
   geom_line(aes(income, predict(lm_entry_income_filtered, newdata = filtered_data))) +
-  ggtitle('Normalized Gated Entries vs. Income') +
-  xlab('median income')+
-  ylab('filtered normalized gated entries')
+  ggtitle('Normalized Station Entries vs. Income') +
+  xlab('Median Income')+
+  ylab('Filtered Formalized Station entries')
 ```
 ## Regression on Gated Entry vs race
 ```{r}
 # Filter data for entries more than 125 (outliers)
-filtered_data <- subset(station_race16, norm_entries < 125)
-# Filter data for income more than 125000 (too less data points)
-filtered_data <- subset(filtered_data, race == "Black")
+filtered_data_black <- station_race16 %>% 
+  subset(norm_entries < 125) %>% 
+  subset(race == "Black")
 
-lm_entry_income_filtered <- lm(norm_entries ~ percent, data = station_race16)
+lm_entry_black_filtered <- lm(norm_entries ~ 1 + percent, data = filtered_data_black)
 summary(lm_entry_income_filtered)
 
 # Plotting
-ggplot(filtered_data) +
+ggplot(filtered_data_black) +
   geom_point(aes(percent, norm_entries)) +
-  geom_line(aes(percent, predict(lm_entry_income_filtered, newdata = filtered_data))) +
+  geom_line(aes(percent, predict(lm_entry_black_filtered, newdata = filtered_data_race))) +
   ggtitle('Normalized Gated Entries vs. Race') +
-  xlab('How White')+
-  ylab('filtered normalized gated entries')
+  xlab('Percent Black')+
+  ylab('Normalized Station Entries')
 ```
 
 ```{r}
-lm_entry_income <- lm(norm_entries ~ race, data = station_race16)
-summary(lm_entry_income)
+filtered_data_white <- station_race16 %>% 
+  subset(norm_entries < 125) %>% 
+  subset(race == "White")
+
+
+lm_entry_white_filtered <- lm(norm_entries ~ 1 + percent, data = filtered_data_white)
+summary(lm_entry_income_filtered)
+
+# Plotting
+ggplot(filtered_data_white) +
+  geom_point(aes(percent, norm_entries)) +
+  geom_line(aes(percent, predict(lm_entry_white_filtered, newdata = filtered_data_white))) +
+  ggtitle('Normalized Gated Entries vs. Race') +
+  xlab('Percent White')+
+  ylab('Normalized Station Entries')
 ```
 
-```{r}
-ggplot()+geom_point(aes(station_race16$race,station_race16$norm_entries))+
-  geom_line(aes(station_race16$race, predict(lm_entry_income, newdata = station_race16)))+
-  ggtitle('normalized gated entries vs. race')+
-  xlab('normalized gated entries')+
-  ylab('median race')
-```
 
 
 ```{r}
