@@ -27,8 +27,7 @@ pacman::p_load(
 
 API Keys: DO NOT COMMIT
 ```{r}
-# 
-
+# Put API keys here
 
 ```
 
@@ -145,8 +144,9 @@ br_2 <- boston_race_22 %>%
 #plotting the two years side by side using patchwork
 br_1 + br_2
 ```
+# Census & MBTA Data
 
-# Load Census Data on Income
+## Load Census Data on Income
 ```{r}
 options(tigris_use_cache = TRUE)
 
@@ -199,7 +199,7 @@ boston_tract_location <- filter(
 )
 ```
 
-
+## Correlate stations with blocks
 ```{r}
 # find the "center point" of all the block border polygons
 boston_tract_location$center_of_geo <-
@@ -255,40 +255,27 @@ census_stations
 
 ## Normalize entries for population
 ```{r}
-# Get total entries for 2016
-station16 <- read.csv("GSE_by_year/GSE_2016.csv")
 
 # Aggregate the data by station and calculate the sum of entries for 2016
-station_sum16 <- station16 %>%
+station16 <- read.csv("GSE_by_year/GSE_2016.csv") %>%
   group_by(station_name) %>%
-  summarise(total_entries = sum(gated_entries))
+  summarise(total_entries = sum(gated_entries)) %>% 
+  left_join(tstops, by = c("station_name" = "name"))
 
-# join with stops
-station16 <- left_join(station_sum16, tstops, by = c("station_name" = "name"))
-
-# Get total entries for 2022
-station22 <- read.csv("GSE_by_year/GSE_2022.csv")
 
 # Aggregate the data by station and calculate the sum of entries for 2022
-station_sum22 <- station22 %>%
+station_sum22 <- read.csv("GSE_by_year/GSE_2022.csv") %>%
   group_by(station_name) %>%
-  summarise(total_entries = sum(gated_entries))
-
-#join with stops
-station22 <- left_join(station_sum22, tstops, by = c("station_name" = "name"))
+  summarise(total_entries = sum(gated_entries)) %>% 
+  left_join(tstops, by = c("station_name" = "name"))
 
 
-# Find population for 2016
-tract_station_population16 <-
-  st_join(boston_tract_location, boston_race_16)
-tract_station_population16 <-
-  group_by(tract_station_population16, nearest_station)
+# Find population for 2016, remove geometry
 norm_station_populations16 <-
-  summarise(tract_station_population16, population = sum(summary_est))
-
-# Convert 2016 stations to not have geometry
-norm_station_populations16 <-
-  sf_to_df(norm_station_populations16, fill = TRUE, unlist = NULL)
+  st_join(boston_tract_location, boston_race_16) %>% 
+  group_by(nearest_station) %>% 
+  summarise(population = sum(summary_est)) %>% 
+  sf_to_df(fill = TRUE, unlist = NULL)
 
 # join populations and station entries to have both and remove NAs
 norm_station_populations16 <-
@@ -346,7 +333,7 @@ norm_station_populations22$norm_entries <-
     norm_station_populations22$population
 ```
 
-## Make linear regression models
+# Make linear regression models
 
 ```{r}
 # Join normalized entries with racial data
@@ -489,7 +476,7 @@ summary(lm_entry_income_filtered)
 # Plotting
 ggplot(filtered_data_black) +
   geom_point(aes(percent, norm_entries)) +
-  geom_line(aes(percent, predict(lm_entry_black_filtered, newdata = filtered_data_race))) +
+  geom_line(aes(percent, predict(lm_entry_black_filtered, newdata = filtered_data_black))) +
   ggtitle('Normalized Gated Entries vs. Race') +
   xlab('Percent Black')+
   ylab('Normalized Station Entries')
@@ -570,7 +557,7 @@ ggplot(station_populations_16_22) +
   ylab("difference in usage between 2016 and 2022")+ 
   scale_fill_gradientn(colours = c("red", "yellow", "green"), values = c(0, 0.9875, 1), na.value = NA, name = "# of extra Rider Increase in 2022")
 ```
-
+# Mapping Census Data with Station Locations
 
 ```{r, "median income"}
 # plotting the median income in suffolk county in 2022 and 2016
@@ -646,7 +633,7 @@ boston_race_22 %>%
     color = "red")+
   theme_void() +
   scale_fill_viridis_c() +
-  labs(fill = "% of population", subtitle = "2022 census", title = "Red Line station locations")
+  labs(fill = "% of population", subtitle = "2022 census", title = "MBTA Station Locations")
 
 ```
 
